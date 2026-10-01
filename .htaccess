@@ -4,7 +4,7 @@ Options -MultiViews -Indexes
 RewriteEngine On
 
 # Block direct access to templates and config
-RewriteRule ^(includes|pages)(/|$) - [F,L]
+RewriteRule ^(includes|pages|storage)(/|$) - [F,L]
 RewriteRule ^config\.php$ - [F,L]
 
 # Serve existing files (assets, images, PDF, robots.txt) directly;

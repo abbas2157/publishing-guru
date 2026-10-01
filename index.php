@@ -20,6 +20,12 @@ if ($path !== '/') {
     $path = rtrim($path, '/');
 }
 
+// Admin dashboard (/admin, /admin/login, /admin/queries, ...).
+if ($path === '/admin' || strpos($path, '/admin/') === 0) {
+    require __DIR__ . '/includes/admin/bootstrap.php';
+    exit;
+}
+
 // XML sitemap generated from the route table; lastmod follows the page template.
 if ($path === '/sitemap.xml') {
     header('Content-Type: application/xml; charset=UTF-8');

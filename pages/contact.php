@@ -15,17 +15,7 @@
                     </div>
                     <div class="p-6 pt-0">
 <?php
-$services = [
-    'niche-keyword' => 'Niche & Keyword Research',
-    'book-formatting' => 'Book Formatting',
-    'amazon-ads' => 'Amazon Ads Management',
-    'toc-creation' => 'Professional TOC Creation',
-    'book-cover' => 'Book Cover Design',
-    'a-content' => 'A+ Content Design',
-    'success-accelerator' => 'Success Accelerator',
-    'kdp-flipping-web' => 'KDP Flipping Web',
-    'general' => 'General Inquiry',
-];
+$services = INQUIRY_SERVICES;
 // Pre-select a service from links like /contact?service=amazon-ads
 $selectedService = isset($_GET['service'], $services[$_GET['service']]) ? $_GET['service'] : '';
 ?>

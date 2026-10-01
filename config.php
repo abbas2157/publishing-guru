@@ -27,5 +27,27 @@ define('FB_PIXEL_ID', '1365172541683278');
 define('SUPABASE_URL', 'https://zlpxtvozzuaypgxpnhqo.supabase.co');
 define('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpscHh0dm96enVheXBneHBuaHFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwOTczMjIsImV4cCI6MjA3MzY3MzMyMn0.zcfiIpNc3R05pKL3zPV37rZQ0pnInMB2LaGejpEy3mc');
 
+// Admin dashboard login (/admin). Store only a password_hash() — never the plain password.
+// Generate a new hash with: php -r "echo password_hash('new-password', PASSWORD_DEFAULT);"
+define('ADMIN_USERNAME', 'admin');
+define('ADMIN_PASSWORD_HASH', '$2y$10$NxODJFuXd4SvlcZroBxyU.qIGpHiojjkQV/SnM8hiZDO7Tw0CYOrW');
+define('ADMIN_DISPLAY_NAME', 'Publishing Guru Admin');
+
+// Where contact-form queries are stored (outside web access, see .htaccess).
+define('QUERIES_FILE', __DIR__ . '/storage/queries.json');
+
+// Services offered in the contact form (value => label); also used to label queries in /admin.
+const INQUIRY_SERVICES = [
+    'niche-keyword' => 'Niche & Keyword Research',
+    'book-formatting' => 'Book Formatting',
+    'amazon-ads' => 'Amazon Ads Management',
+    'toc-creation' => 'Professional TOC Creation',
+    'book-cover' => 'Book Cover Design',
+    'a-content' => 'A+ Content Design',
+    'success-accelerator' => 'Success Accelerator',
+    'kdp-flipping-web' => 'KDP Flipping Web',
+    'general' => 'General Inquiry',
+];
+
 define('CALENDLY_URL', 'https://calendly.com/publishinguru/free-consultancy-amazon-kdp');
 define('WHATSAPP_NUMBER', '17208034953');

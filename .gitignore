@@ -6,3 +6,6 @@ KDP_Book_final.pdf
 Thumbs.db
 .vscode/
 .idea/
+
+# Stored contact-form queries (private data)
+storage/
