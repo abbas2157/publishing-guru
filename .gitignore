@@ -1,0 +1,8 @@
+# Paid product - delivered via Supabase, keep out of the repo
+KDP_Book_final.pdf
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,63 @@
+# Apache configuration for Publishing Guru (PHP)
+Options -MultiViews -Indexes
+
+RewriteEngine On
+
+# Block direct access to templates and config
+RewriteRule ^(includes|pages)(/|$) - [F,L]
+RewriteRule ^config\.php$ - [F,L]
+
+# Serve existing files (assets, images, PDF, robots.txt) directly;
+# route every other request through the front controller.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+
+# ---------------------------------------------------------------------------
+# Performance: compression
+# ---------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/xml \
+        application/javascript text/javascript application/json application/ld+json \
+        image/svg+xml image/x-icon font/ttf font/otf
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Performance: browser caching
+# Assets under /assets carry content hashes (or a ?v= query for CSS/JS),
+# so they can be cached for a year. HTML is always revalidated.
+# ---------------------------------------------------------------------------
+<IfModule mod_mime.c>
+    AddType image/webp .webp
+    AddType image/avif .avif
+    AddType image/svg+xml .svg
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 week"
+    ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType application/xml "access plus 1 day"
+    ExpiresByType text/plain "access plus 1 day"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/avif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType image/vnd.microsoft.icon "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|svg|webp|avif|png|jpe?g|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    # Keep the downloadable book out of search results.
+    <FilesMatch "\.pdf$">
+        Header set X-Robots-Tag "noindex, nofollow"
+    </FilesMatch>
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>
