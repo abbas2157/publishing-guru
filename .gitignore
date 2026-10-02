@@ -9,3 +9,6 @@ Thumbs.db
 
 # Stored contact-form queries (private data)
 storage/
+
+# Uploaded blog images (user content, back up with storage/)
+uploads/

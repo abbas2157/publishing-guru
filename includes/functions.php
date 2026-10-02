@@ -26,11 +26,25 @@ function asset(string $file): string
     return BASE_PATH . '/' . $file;
 }
 
-/** Render a template from includes/, e.g. partial('sections/pricing'). */
+/**
+ * Render a template from includes/, e.g. partial('sections/pricing').
+ * Shared sections get their own content scope ("section:pricing", see cms.php), so an edit
+ * made in /admin/seo applies on every page that uses the section.
+ */
 function partial(string $name, array $vars = []): void
 {
-    extract($vars);
-    include __DIR__ . '/' . $name . '.php';
+    $file = __DIR__ . '/' . $name . '.php';
+    if (strncmp($name, 'sections/', 9) !== 0) {
+        extract($vars);
+        include $file;
+        return;
+    }
+    echo CMS_SKIP_OPEN;
+    cms_render('section:' . substr($name, 9), function () use ($file, $vars) {
+        extract($vars);
+        include $file;
+    });
+    echo CMS_SKIP_CLOSE;
 }
 
 /** Inline SVG icons that the original build embeds as data: URIs. */

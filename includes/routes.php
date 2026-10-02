@@ -107,6 +107,21 @@ return [
         'A-to-Z Book Creation Services | Publishing Guru',
         'Fast-track your Amazon KDP publishing success with a complete done-for-you book creation program and intensive support to build a thriving book business.',
         'Success Accelerator'),
+    '/blog' => [
+        'view' => 'blog',
+        'name' => 'Blog',
+        'title' => 'Amazon KDP Publishing Blog – Tips & Guides | Publishing Guru',
+        'description' => 'Practical Amazon KDP publishing tips, step-by-step guides and case studies on niches, formatting, covers, A+ content and Amazon ads.',
+        'schema' => ['blog-schema' => [
+            '@context' => 'https://schema.org',
+            '@type' => 'Blog',
+            '@id' => SITE_URL . '/blog#blog',
+            'name' => SITE_NAME . ' Blog',
+            'url' => SITE_URL . '/blog',
+            'publisher' => ['@id' => SITE_URL . '/#organization'],
+            'inLanguage' => 'en-US',
+        ]],
+    ],
     '/contact' => [
         'view' => 'contact',
         'name' => 'Contact',

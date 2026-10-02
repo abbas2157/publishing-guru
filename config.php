@@ -30,11 +30,21 @@ define('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdX
 // Admin dashboard login (/admin). Store only a password_hash() — never the plain password.
 // Generate a new hash with: php -r "echo password_hash('new-password', PASSWORD_DEFAULT);"
 define('ADMIN_USERNAME', 'admin');
-define('ADMIN_PASSWORD_HASH', '$2y$10$NxODJFuXd4SvlcZroBxyU.qIGpHiojjkQV/SnM8hiZDO7Tw0CYOrW');
+define('ADMIN_PASSWORD_HASH', '$2y$10$CzBIDTIDEOVWP9ISu0Z74.9DW7vFkQK0j.fR8Rbxsj5ePxIkREcyO');
 define('ADMIN_DISPLAY_NAME', 'Publishing Guru Admin');
 
 // Where contact-form queries are stored (outside web access, see .htaccess).
 define('QUERIES_FILE', __DIR__ . '/storage/queries.json');
+
+// Page meta, schema, text and image alt overrides edited in /admin/seo.
+define('CONTENT_FILE', __DIR__ . '/storage/content.json');
+
+// Blog (/blog, managed in /admin/blog). Posts and categories live in BLOG_FILE; uploaded
+// images go to BLOG_UPLOADS (public, relative to the site root).
+define('BLOG_FILE', __DIR__ . '/storage/blog.json');
+define('BLOG_UPLOADS', 'uploads/blog');
+define('BLOG_PER_PAGE', 9);
+define('BLOG_DEFAULT_AUTHOR', 'Publishing Guru Team');
 
 // Services offered in the contact form (value => label); also used to label queries in /admin.
 const INQUIRY_SERVICES = [

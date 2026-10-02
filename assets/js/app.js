@@ -680,6 +680,20 @@
     }
 
     /* ------------------------------------------------------------------
+     * Blog: "Copy link" share button
+     * ---------------------------------------------------------------- */
+    function initCopyLinks() {
+        $$('[data-copy-link]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var link = btn.getAttribute('data-copy-link');
+                var fallback = function () { window.prompt('Copy this link:', link); };
+                if (!navigator.clipboard) return fallback();
+                navigator.clipboard.writeText(link).then(function () { sonner.success('Link copied to clipboard'); }, fallback);
+            });
+        });
+    }
+
+    /* ------------------------------------------------------------------
      * Boot
      * ---------------------------------------------------------------- */
     function boot() {
@@ -689,6 +703,7 @@
         initContactForms(selects);
         initCourseBook();
         initLinks();
+        initCopyLinks();
         if (APP.track) track('ViewContent', APP.track);
     }
 

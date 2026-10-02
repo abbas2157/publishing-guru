@@ -23,6 +23,7 @@
                     <li><a class="story-link flex items-center space-x-2 text-foreground hover:text-foreground transition-colors group font-medium px-3 py-2" href="<?= url('/contact') ?>"><img src="<?= asset('assets/headerIcon-contact-C9foSzIA.svg') ?>" width="24" height="25" alt="Contact" class="w-5 h-5"><span>Contact</span></a></li>
                     <li><a class="story-link flex items-center space-x-2 text-foreground hover:text-foreground transition-colors group font-medium px-3 py-2" href="<?= url('/kdp-flipping-web') ?>"><img src="<?= asset('assets/kdp-icon-CHrYapQL.svg') ?>" width="24" height="24" alt="KDP Flipping" class="w-5 h-5"><span>KDP Flipping</span></a></li>
                     <li><a class="story-link flex items-center space-x-2 text-foreground hover:text-foreground transition-colors group font-medium px-3 py-2" href="<?= url('/amazon-kdp-course-book') ?>"><img src="<?= asset('assets/book-course-icon-CLnpCMV3.svg') ?>" width="24" height="24" alt="Course Book" class="w-5 h-5"><span>Course Book</span></a></li>
+                    <li><a class="story-link flex items-center space-x-2 text-foreground hover:text-foreground transition-colors group font-medium px-3 py-2" href="<?= url('/blog') ?>"><img src="<?= asset('assets/headerIcon-blog.svg') ?>" width="24" height="25" alt="Blog" class="w-5 h-5"><span>Blog</span></a></li>
                 </ul>
             </div>
             <div class="absolute left-0 top-full flex justify-center"></div>

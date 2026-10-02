@@ -4,6 +4,8 @@
  */
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/functions.php';
+require __DIR__ . '/includes/cms.php';
+require __DIR__ . '/includes/blog.php';
 
 $routes = require __DIR__ . '/includes/routes.php';
 
@@ -33,12 +35,38 @@ if ($path === '/sitemap.xml') {
     echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', "\n";
     foreach ($routes as $routePath => $route) {
         $loc = SITE_URL . ($routePath === '/' ? '/' : $routePath);
-        $lastmod = date('Y-m-d', filemtime(__DIR__ . '/pages/' . $route['view'] . '.php'));
+        // Newer of the template and the last edit made in /admin/seo.
+        $edited = strtotime(cms_data()['updated'][$routePath] ?? '') ?: 0;
+        if ($routePath === '/blog' && ($latest = blog_posts())) {
+            $edited = max($edited, strtotime($latest[0]['updated_at'] ?? $latest[0]['published_at']));
+        }
+        $lastmod = date('Y-m-d', max($edited, filemtime(__DIR__ . '/pages/' . $route['view'] . '.php')));
         $priority = $routePath === '/' ? '1.0' : (substr_count($routePath, '/') > 1 ? '0.7' : '0.8');
         echo "  <url><loc>", e($loc), "</loc><lastmod>$lastmod</lastmod><priority>$priority</priority></url>\n";
     }
+    // Blog categories with live posts, then every live post.
+    $posts = blog_posts();
+    foreach (array_unique(array_filter(array_column($posts, 'category'))) as $slug) {
+        if (isset(blog_categories()[$slug])) {
+            echo "  <url><loc>", e(SITE_URL . '/blog/category/' . $slug), "</loc><priority>0.5</priority></url>\n";
+        }
+    }
+    foreach ($posts as $post) {
+        $lastmod = date('Y-m-d', strtotime($post['updated_at'] ?? $post['published_at']));
+        echo "  <url><loc>", e(SITE_URL . '/blog/' . $post['slug']), "</loc><lastmod>$lastmod</lastmod><priority>0.6</priority></url>\n";
+    }
     echo '</urlset>', "\n";
     exit;
+}
+
+if ($path === '/blog/feed.xml') {
+    blog_feed();
+    exit;
+}
+
+// Blog posts and categories are added to the route table so breadcrumbs work like any page.
+if (!isset($routes[$path]) && ($blogRoute = blog_route($path))) {
+    $routes[$path] = $blogRoute;
 }
 
 if (isset($routes[$path])) {
@@ -46,6 +74,17 @@ if (isset($routes[$path])) {
 } else {
     http_response_code(404);
     $page = ['view' => '404'];
+}
+
+// Blog index/category: resolve ?q= and ?page= before the <head> is rendered.
+if ($page['view'] === 'blog') {
+    $blogListing = blog_listing($page);
+    if ($blogListing) {
+        $page = blog_listing_route($page, $blogListing);
+    } else {
+        http_response_code(404);
+        $page = ['view' => '404'];
+    }
 }
 
 require __DIR__ . '/includes/layout.php';

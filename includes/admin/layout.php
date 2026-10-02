@@ -6,6 +6,8 @@ $newCount = count(array_filter($queries, fn($q) => ($q['status'] ?? 'new') === '
 $nav = [
     ['/admin', 'Dashboard', 'dashboard', $adminPath === '/'],
     ['/admin/queries', 'Queries', 'inbox', str_starts_with($adminPath, '/queries')],
+    ['/admin/blog', 'Blog', 'pen', str_starts_with($adminPath, '/blog')],
+    ['/admin/seo', 'SEO & Content', 'file-text', str_starts_with($adminPath, '/seo')],
 ];
 $user = admin_user();
 include __DIR__ . '/head.php';

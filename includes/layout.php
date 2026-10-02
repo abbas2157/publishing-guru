@@ -3,14 +3,27 @@
  * Page shell. Expects $page (route definition) and $path (current route).
  */
 $isNotFound = $page['view'] === '404';
-$title = $page['title'] ?? DEFAULT_TITLE;
-$description = $page['description'] ?? DEFAULT_DESCRIPTION;
-$canonical = SITE_URL . ($path === '/' ? '/' : $path);
+// Meta edited in /admin/seo wins over the route table.
+$meta = $isNotFound ? [] : cms_page_meta($path);
+$title = ($meta['title'] ?? '') ?: ($page['title'] ?? DEFAULT_TITLE);
+$description = ($meta['description'] ?? '') ?: ($page['description'] ?? DEFAULT_DESCRIPTION);
+$canonical = $page['canonical'] ?? SITE_URL . ($path === '/' ? '/' : $path);
 $ogImage = SITE_URL . '/' . ($page['og_image'] ?? DEFAULT_OG_IMAGE);
 $fontsUrl = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap';
 
 // Breadcrumb trail (Home > [parent] > page) for JSON-LD on inner pages.
 $schemas = $page['schema'] ?? [];
+if (isset($meta['schema'])) {
+    $schemas = [];
+    foreach ($meta['schema'] as $i => $schema) {
+        $schemas['schema-' . ($i + 1)] = $schema;
+    }
+}
+// FAQs edited in /admin/seo get FAQPage markup, unless the page schema already has one.
+$faq = $isNotFound ? [] : cms_page_faq($path);
+if ($faq && !in_array('FAQPage', array_column($schemas, '@type'), true)) {
+    $schemas['faq-schema'] = cms_faq_schema($faq);
+}
 if (!$isNotFound && $path !== '/') {
     $trail = [];
     for ($p = $path; $p !== '/' && isset($routes[$p]); $p = $routes[$p]['parent'] ?? '/') {
@@ -46,21 +59,26 @@ $appConfig = [
 <?php if ($isNotFound): ?>
     <meta name="robots" content="noindex, follow" />
 <?php else: ?>
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="robots" content="<?= e($page['robots'] ?? 'index, follow, max-image-preview:large') ?>" />
     <link rel="canonical" href="<?= e($canonical) ?>">
 <?php endif; ?>
     <meta name="theme-color" content="#f2eee8" />
 
     <meta property="og:site_name" content="<?= e(SITE_NAME) ?>" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="<?= e($page['og_type'] ?? 'website') ?>" />
     <meta property="og:title" content="<?= e($title) ?>" />
     <meta property="og:description" content="<?= e($description) ?>" />
 <?php if (!$isNotFound): ?>
     <meta property="og:url" content="<?= e($canonical) ?>" />
 <?php endif; ?>
+<?php foreach ($page['article'] ?? [] as $property => $values): ?>
+<?php foreach ((array) $values as $value): if ($value === '') continue; ?>
+    <meta property="article:<?= e($property) ?>" content="<?= e($value) ?>" />
+<?php endforeach; ?>
+<?php endforeach; ?>
     <meta property="og:image" content="<?= e($ogImage) ?>" />
-    <meta property="og:image:alt" content="<?= e(SITE_NAME) ?>" />
+    <meta property="og:image:alt" content="<?= e($page['og_image_alt'] ?? SITE_NAME) ?>" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="<?= e($title) ?>" />
     <meta name="twitter:description" content="<?= e($description) ?>" />
@@ -97,8 +115,11 @@ $appConfig = [
 
     <link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>">
     <link rel="stylesheet" href="<?= asset('assets/css/sonner.css') ?>">
+<?php if (in_array($page['view'], ['blog', 'blog-post'], true)): ?>
+    <link rel="alternate" type="application/rss+xml" title="<?= e(SITE_NAME) ?> Blog" href="<?= url('/blog/feed.xml') ?>">
+<?php endif; ?>
 <?php foreach ($schemas as $id => $schema): ?>
-    <script type="application/ld+json" id="<?= e($id) ?>"><?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+    <script type="application/ld+json" id="<?= e($id) ?>"><?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
 <?php endforeach; ?>
 <?php if ($page['view'] === 'book-call'): ?>
     <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
@@ -115,9 +136,12 @@ $appConfig = [
         <?php include __DIR__ . '/../pages/404.php'; ?>
 <?php else: ?>
         <div class="<?= e($page['wrapper'] ?? 'min-h-screen') ?>">
-            <?php partial('header'); ?>
-            <?php include __DIR__ . '/../pages/' . $page['view'] . '.php'; ?>
-            <?php partial('footer'); ?>
+            <?php cms_render('global:header', fn() => partial('header')); ?>
+            <?php ob_start(); include __DIR__ . '/../pages/' . $page['view'] . '.php'; $html = ob_get_clean(); echo ($page['cms'] ?? true) ? cms_apply($path, $html) : str_replace([CMS_SKIP_OPEN, CMS_SKIP_CLOSE], '', $html); ?>
+<?php if ($faq): ?>
+            <?php include __DIR__ . '/faq.php'; ?>
+<?php endif; ?>
+            <?php cms_render('global:footer', fn() => partial('footer')); ?>
         </div>
 <?php endif; ?>
     </div>
