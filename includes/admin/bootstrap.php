@@ -73,11 +73,15 @@ if (preg_match('#^/blog/preview/([a-f0-9]+)$#', $adminPath, $m) && ($previewPost
 }
 if (preg_match('#^/blog/delete/([a-f0-9]+)$#', $adminPath, $m) && $method === 'POST') {
     if (csrf_valid($_POST['csrf'] ?? '')) {
-        $data = blog_data();
-        $data['posts'] = array_values(array_filter($data['posts'], fn($p) => $p['id'] !== $m[1]));
-        blog_save($data);
+        blog_delete_post($m[1]);
     }
     redirect('/admin/blog?deleted=1');
+}
+if (preg_match('#^/queries/(\d+)/status$#', $adminPath, $m) && $method === 'POST') {
+    if (csrf_valid($_POST['csrf'] ?? '') && isset(QUERY_STATUSES[$_POST['status'] ?? ''])) {
+        admin_set_query_status((int) $m[1], $_POST['status']);
+    }
+    redirect('/admin/queries/' . $m[1]);
 }
 
 $queries = admin_queries();
@@ -88,7 +92,13 @@ if ($adminPath === '/') {
 } elseif ($adminPath === '/queries') {
     $view = 'queries';
     $pageTitle = 'Queries';
-} elseif (preg_match('#^/queries/([A-Za-z0-9_-]+)$#', $adminPath, $m) && ($query = admin_find_query($queries, $m[1]))) {
+} elseif (preg_match('#^/queries/(\d+)$#', $adminPath, $m) && ($query = admin_find_query($queries, $m[1]))) {
+    // Opening a new query marks it as read.
+    if (($query['status'] ?? 'new') === 'new') {
+        admin_set_query_status((int) $query['id'], 'read');
+        $query['status'] = 'read';
+        $queries = admin_queries();
+    }
     $view = 'query';
     $pageTitle = 'Query from ' . $query['name'];
 } elseif ($adminPath === '/seo') {
@@ -136,24 +146,16 @@ if ($adminPath === '/') {
     $error = null;
     $posted = null;
     if ($method === 'POST') {
-        $data = blog_data();
         if (!csrf_valid($_POST['csrf'] ?? '')) {
             $error = 'Your session expired. Please try again.';
-        } elseif ($built = blog_admin_build_post($_POST, $editing, $data, $error)) {
-            $found = false;
-            foreach ($data['posts'] as $i => $p) {
-                if ($p['id'] === $built['id']) {
-                    $data['posts'][$i] = $built;
-                    $found = true;
-                }
-            }
-            if (!$found) {
-                $data['posts'][] = $built;
-            }
-            if (blog_save($data)) {
+        } elseif ($built = blog_admin_build_post($_POST, $editing, $error)) {
+            try {
+                blog_store_post($built);
                 redirect('/admin/blog/edit/' . $built['id'] . '?saved=1');
+            } catch (PDOException $e) {
+                error_log('blog save: ' . $e->getMessage());
+                $error = 'Could not save the post to the database. Please try again.';
             }
-            $error = 'Could not write ' . basename(BLOG_FILE) . '. Check that the storage/ folder is writable.';
         }
         $posted = $_POST;
     }

@@ -22,7 +22,7 @@ function blog_field(array $in, string $key, int $max = 300): string
  * Build a post from the editor form. Returns null and sets $error when it can't be saved.
  * A new category typed into "new_category" is created on the fly.
  */
-function blog_admin_build_post(array $in, ?array $existing, array &$data, ?string &$error): ?array
+function blog_admin_build_post(array $in, ?array $existing, ?string &$error): ?array
 {
     $title = blog_field($in, 'title', 200);
     if ($title === '') {
@@ -49,8 +49,8 @@ function blog_admin_build_post(array $in, ?array $existing, array &$data, ?strin
 
     $category = (string) ($in['category'] ?? '');
     if ($newCategory = blog_field($in, 'new_category', 60)) {
-        $category = blog_admin_add_category($data, $newCategory, '');
-    } elseif (!in_array($category, array_column($data['categories'], 'slug'), true)) {
+        $category = blog_add_category($newCategory);
+    } elseif (!isset(blog_categories()[$category])) {
         $category = '';
     }
 
@@ -67,19 +67,12 @@ function blog_admin_build_post(array $in, ?array $existing, array &$data, ?strin
         $image = '';
     }
 
+    // Renaming a live post's slug keeps the old URL redirecting (blog_store_post()).
     $slugInput = trim((string) ($in['slug'] ?? ''));
-    $slug = blog_unique_slug(blog_slugify($slugInput !== '' ? $slugInput : $title), $existing['id'] ?? null);
-    // Remember URLs this post was live under so they keep redirecting (see blog_route()).
-    $oldSlugs = $existing['old_slugs'] ?? [];
-    if ($existing && $existing['slug'] !== $slug && blog_is_live($existing)) {
-        $oldSlugs[] = $existing['slug'];
-    }
-    $oldSlugs = array_values(array_diff(array_unique($oldSlugs), [$slug]));
     $now = date('c');
     return [
         'id' => $existing['id'] ?? bin2hex(random_bytes(6)),
-        'slug' => $slug,
-        'old_slugs' => $oldSlugs,
+        'slug' => blog_unique_slug(blog_slugify($slugInput !== '' ? $slugInput : $title), $existing['id'] ?? null),
         'title' => $title,
         'excerpt' => blog_field($in, 'excerpt', 300),
         'content' => $content,
@@ -97,70 +90,31 @@ function blog_admin_build_post(array $in, ?array $existing, array &$data, ?strin
     ];
 }
 
-/** Add a category (or reuse one with the same name) and return its slug. */
-function blog_admin_add_category(array &$data, string $name, string $description): string
-{
-    foreach ($data['categories'] as $cat) {
-        if (mb_strtolower($cat['name']) === mb_strtolower($name)) {
-            return $cat['slug'];
-        }
-    }
-    $taken = array_flip(array_column($data['categories'], 'slug'));
-    $base = blog_slugify($name);
-    $slug = $base;
-    for ($n = 2; isset($taken[$slug]); $n++) {
-        $slug = $base . '-' . $n;
-    }
-    $data['categories'][] = ['slug' => $slug, 'name' => $name, 'description' => $description];
-    return $slug;
-}
-
 /** Apply a POST from the categories page (add / update / delete). Returns a status message. */
 function blog_admin_categories_action(array $in, ?string &$error): ?string
 {
-    $data = blog_data();
     $action = (string) ($in['action'] ?? '');
     $slug = (string) ($in['slug'] ?? '');
     $name = blog_field($in, 'name', 60);
     $description = blog_field($in, 'description', 300);
 
+    if (in_array($action, ['add', 'update'], true) && $name === '') {
+        $error = 'Give the category a name.';
+        return null;
+    }
     if ($action === 'add') {
-        if ($name === '') {
-            $error = 'Give the category a name.';
-            return null;
-        }
-        blog_admin_add_category($data, $name, $description);
-        $message = 'Category “' . $name . '” added.';
-    } elseif ($action === 'update') {
-        if ($name === '') {
-            $error = 'A category needs a name.';
-            return null;
-        }
-        foreach ($data['categories'] as &$cat) {
-            if ($cat['slug'] === $slug) {
-                $cat['name'] = $name;
-                $cat['description'] = $description;
-            }
-        }
-        unset($cat);
-        $message = 'Category updated.';
-    } elseif ($action === 'delete') {
-        $data['categories'] = array_values(array_filter($data['categories'], fn($c) => $c['slug'] !== $slug));
-        foreach ($data['posts'] as &$post) {
-            if (($post['category'] ?? '') === $slug) {
-                $post['category'] = '';
-            }
-        }
-        unset($post);
-        $message = 'Category deleted. Its posts are now uncategorised.';
-    } else {
-        return null;
+        blog_add_category($name, $description);
+        return 'Category “' . $name . '” added.';
     }
-    if (!blog_save($data)) {
-        $error = 'Could not write ' . basename(BLOG_FILE) . '. Check that the storage/ folder is writable.';
-        return null;
+    if ($action === 'update') {
+        blog_update_category($slug, $name, $description);
+        return 'Category updated.';
     }
-    return $message;
+    if ($action === 'delete') {
+        blog_delete_category($slug);
+        return 'Category deleted. Its posts are now uncategorised.';
+    }
+    return null;
 }
 
 /** Value for a datetime-local input. */

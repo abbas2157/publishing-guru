@@ -220,15 +220,12 @@ function seo_save(string $scope, array $target, array $units, array $post, ?stri
             unset($content[$key]);
         }
     }
-    if ($content) {
-        $data['content'][$scope] = $content;
-    } else {
-        unset($data['content'][$scope]);
-    }
-    $data['updated'][$scope] = date('c');
-
-    if (!cms_save($data)) {
-        $error = 'Could not write ' . basename(CONTENT_FILE) . '. Check that the storage/ folder is writable.';
+    $isPage = $target['type'] === 'page';
+    try {
+        cms_save_scope($scope, $content, $isPage ? ($data['meta'][$scope] ?? []) : null, $isPage ? ($data['faqs'][$scope] ?? ['items' => []]) : null);
+    } catch (PDOException $e) {
+        error_log('seo_save: ' . $e->getMessage());
+        $error = 'Could not save to the database. Please try again.';
         return false;
     }
     return true;

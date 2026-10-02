@@ -2,11 +2,11 @@
 /**
  * Blog: storage, queries, content cleaning and image uploads.
  *
- * storage/blog.json:
- *   posts: [ { id, slug, title, excerpt, content (HTML), image (path under BLOG_UPLOADS), image_alt,
- *              category (slug), tags [..], author, status (draft|published), published_at,
- *              meta_title, meta_description, created_at, updated_at } ]
- *   categories: [ { slug, name, description } ]
+ * Posts live in pg_posts, categories in pg_categories, renamed-slug redirects in
+ * pg_post_redirects (see includes/db.php). Posts are handled as arrays:
+ *   { id, slug, title, excerpt, content (HTML), image (path under BLOG_UPLOADS), image_alt,
+ *     category (slug or ''), tags [..], author, status (draft|published), published_at,
+ *     meta_title, meta_description, created_at, updated_at }   dates are ISO 8601
  *
  * A post is live when it is published and its publish date has passed, so a future date schedules it.
  * Root-relative links and image URLs in post content are stored without BASE_PATH (see cms.php).
@@ -15,41 +15,67 @@
 const BLOG_RESERVED_SLUGS = ['category', 'feed', 'feed-xml', 'page', 'search', 'tag'];
 const BLOG_IMAGE_MAX_WIDTH = 1600;
 const BLOG_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+const BLOG_LIVE_SQL = "status = 'published' AND published_at <= ?";
 
 // ---------------------------------------------------------------------------
 // Storage
 // ---------------------------------------------------------------------------
 
-function blog_data(): array
+/** Database row → post array. */
+function blog_row(array $row): array
 {
-    static $data = null;
-    if ($data === null || !empty($GLOBALS['blog_reload'])) {
-        unset($GLOBALS['blog_reload']);
-        $json = is_file(BLOG_FILE) ? json_decode((string) file_get_contents(BLOG_FILE), true) : null;
-        $data = (is_array($json) ? $json : []) + ['posts' => [], 'categories' => []];
+    $row['category'] = (string) $row['category'];
+    $row['tags'] = json_decode($row['tags'], true) ?: [];
+    foreach (['published_at', 'created_at', 'updated_at'] as $field) {
+        $row[$field] = db_iso($row[$field]);
     }
-    return $data;
+    return $row;
 }
 
-function blog_save(array $data): bool
+function blog_now(): string
 {
-    $dir = dirname(BLOG_FILE);
-    if (!is_dir($dir) && !mkdir($dir, 0775, true)) {
-        return false;
-    }
-    $data['posts'] = array_values($data['posts']);
-    $data['categories'] = array_values($data['categories']);
-    $tmp = BLOG_FILE . '.' . bin2hex(random_bytes(4)) . '.tmp';
-    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
-    if ($json === false || file_put_contents($tmp, $json, LOCK_EX) === false) {
-        return false;
-    }
-    if (!rename($tmp, BLOG_FILE)) {
-        @unlink($tmp);
-        return false;
-    }
-    $GLOBALS['blog_reload'] = true;
-    return true;
+    return date('Y-m-d H:i:s');
+}
+
+/**
+ * Insert or update a post. When a live post's slug changes, the old slug keeps redirecting
+ * to it (pg_post_redirects); a slug that a post uses again stops being a redirect.
+ */
+function blog_store_post(array $post): void
+{
+    db_transaction(function () use ($post) {
+        $existing = db_one('SELECT slug, status, published_at FROM pg_posts WHERE id = ?', [$post['id']]);
+        db_query(
+            'INSERT INTO pg_posts (id, slug, title, excerpt, content, image, image_alt, category, tags, author, status, published_at,
+                 meta_title, meta_description, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE slug = VALUES(slug), title = VALUES(title), excerpt = VALUES(excerpt), content = VALUES(content),
+                 image = VALUES(image), image_alt = VALUES(image_alt), category = VALUES(category), tags = VALUES(tags),
+                 author = VALUES(author), status = VALUES(status), published_at = VALUES(published_at),
+                 meta_title = VALUES(meta_title), meta_description = VALUES(meta_description), updated_at = VALUES(updated_at)',
+            [
+                $post['id'], $post['slug'], $post['title'], $post['excerpt'] ?? '', $post['content'] ?? '',
+                $post['image'] ?? '', $post['image_alt'] ?? '', ($post['category'] ?? '') ?: null,
+                json_encode(array_values($post['tags'] ?? []), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
+                $post['author'] ?? '', ($post['status'] ?? '') === 'published' ? 'published' : 'draft', db_datetime($post['published_at'] ?? null),
+                $post['meta_title'] ?? '', $post['meta_description'] ?? '',
+                db_datetime($post['created_at'] ?? null) ?? blog_now(), db_datetime($post['updated_at'] ?? null) ?? blog_now(),
+            ]
+        );
+        $wasLive = $existing && $existing['status'] === 'published' && $existing['published_at'] && $existing['published_at'] <= blog_now();
+        if ($existing && $existing['slug'] !== $post['slug'] && $wasLive) {
+            db_query('REPLACE INTO pg_post_redirects (old_slug, post_id) VALUES (?, ?)', [$existing['slug'], $post['id']]);
+        }
+        foreach ($post['old_slugs'] ?? [] as $old) {
+            db_query('INSERT IGNORE INTO pg_post_redirects (old_slug, post_id) VALUES (?, ?)', [$old, $post['id']]);
+        }
+        db_query('DELETE FROM pg_post_redirects WHERE old_slug = ?', [$post['slug']]);
+    });
+}
+
+function blog_delete_post(string $id): void
+{
+    db_query('DELETE FROM pg_posts WHERE id = ?', [$id]);
 }
 
 // ---------------------------------------------------------------------------
@@ -73,32 +99,59 @@ function blog_status(array $post): string
 /** Posts newest first; only live ones unless $all. */
 function blog_posts(bool $all = false): array
 {
-    $posts = blog_data()['posts'];
-    if (!$all) {
-        $posts = array_filter($posts, 'blog_is_live');
+    $rows = $all
+        ? db_all('SELECT * FROM pg_posts ORDER BY COALESCE(published_at, created_at) DESC')
+        : db_all('SELECT * FROM pg_posts WHERE ' . BLOG_LIVE_SQL . ' ORDER BY published_at DESC', [blog_now()]);
+    return array_map('blog_row', $rows);
+}
+
+/** One page of live posts, optionally in a category and/or matching a search term: [posts, total]. */
+function blog_search(?string $category, string $q, int $limit, int $offset): array
+{
+    $where = BLOG_LIVE_SQL;
+    $params = [blog_now()];
+    if ($category) {
+        $where .= ' AND category = ?';
+        $params[] = $category;
     }
-    usort($posts, fn($a, $b) => strcmp($b['published_at'] ?? $b['created_at'] ?? '', $a['published_at'] ?? $a['created_at'] ?? ''));
-    return array_values($posts);
+    if ($q !== '') {
+        $like = '%' . addcslashes($q, '%_\\') . '%';
+        $where .= ' AND (title LIKE ? OR excerpt LIKE ? OR tags LIKE ? OR content LIKE ?)';
+        array_push($params, $like, $like, $like, $like);
+    }
+    $total = (int) db_value("SELECT COUNT(*) FROM pg_posts WHERE $where", $params);
+    $rows = db_all("SELECT * FROM pg_posts WHERE $where ORDER BY published_at DESC LIMIT " . max(1, $limit) . ' OFFSET ' . max(0, $offset), $params);
+    return [array_map('blog_row', $rows), $total];
 }
 
 function blog_find_post(string $field, string $value): ?array
 {
-    foreach (blog_data()['posts'] as $post) {
-        if (($post[$field] ?? null) === $value) {
-            return $post;
-        }
+    if (!in_array($field, ['id', 'slug'], true)) {
+        return null;
     }
-    return null;
+    $row = db_one("SELECT * FROM pg_posts WHERE $field = ?", [$value]);
+    return $row ? blog_row($row) : null;
 }
 
-/** Categories keyed by slug. */
+/** The live post that an old (renamed) slug should redirect to, if any. */
+function blog_redirect_target(string $slug): ?array
+{
+    $row = db_one('SELECT p.* FROM pg_post_redirects r JOIN pg_posts p ON p.id = r.post_id WHERE r.old_slug = ? AND p.' . BLOG_LIVE_SQL, [$slug, blog_now()]);
+    return $row ? blog_row($row) : null;
+}
+
+/** Categories keyed by slug, alphabetical. */
 function blog_categories(): array
 {
-    $out = [];
-    foreach (blog_data()['categories'] as $cat) {
-        $out[$cat['slug']] = $cat;
+    static $cache = null;
+    if ($cache === null || !empty($GLOBALS['blog_categories_reload'])) {
+        unset($GLOBALS['blog_categories_reload']);
+        $cache = [];
+        foreach (db_all('SELECT slug, name, description FROM pg_categories ORDER BY name') as $cat) {
+            $cache[$cat['slug']] = $cat;
+        }
     }
-    return $out;
+    return $cache;
 }
 
 function blog_category_name(?string $slug): string
@@ -106,16 +159,56 @@ function blog_category_name(?string $slug): string
     return blog_categories()[$slug]['name'] ?? '';
 }
 
+/** Number of posts per category slug (live posts only unless $all). */
+function blog_category_counts(bool $all = false): array
+{
+    $rows = $all
+        ? db_all('SELECT category, COUNT(*) n FROM pg_posts WHERE category IS NOT NULL GROUP BY category')
+        : db_all('SELECT category, COUNT(*) n FROM pg_posts WHERE category IS NOT NULL AND ' . BLOG_LIVE_SQL . ' GROUP BY category', [blog_now()]);
+    return array_map('intval', array_column($rows, 'n', 'category'));
+}
+
+/** Add a category (or reuse one with the same name) and return its slug. */
+function blog_add_category(string $name, string $description = ''): string
+{
+    $existing = db_value('SELECT slug FROM pg_categories WHERE LOWER(name) = LOWER(?)', [$name]);
+    if ($existing) {
+        return $existing;
+    }
+    $base = blog_slugify($name);
+    $slug = $base;
+    for ($n = 2; db_value('SELECT 1 FROM pg_categories WHERE slug = ?', [$slug]); $n++) {
+        $slug = $base . '-' . $n;
+    }
+    db_query('INSERT INTO pg_categories (slug, name, description, created_at) VALUES (?, ?, ?, ?)', [$slug, $name, $description, blog_now()]);
+    $GLOBALS['blog_categories_reload'] = true;
+    return $slug;
+}
+
+function blog_update_category(string $slug, string $name, string $description): void
+{
+    db_query('UPDATE pg_categories SET name = ?, description = ? WHERE slug = ?', [$name, $description, $slug]);
+    $GLOBALS['blog_categories_reload'] = true;
+}
+
+/** Delete a category; its posts become uncategorised (foreign key ON DELETE SET NULL). */
+function blog_delete_category(string $slug): void
+{
+    db_query('DELETE FROM pg_categories WHERE slug = ?', [$slug]);
+    $GLOBALS['blog_categories_reload'] = true;
+}
+
 /** Up to $limit live posts sharing the post's category (then tags), topped up with the latest. */
 function blog_related(array $post, int $limit = 3): array
 {
+    $candidates = array_map('blog_row', db_all(
+        'SELECT * FROM pg_posts WHERE id <> ? AND ' . BLOG_LIVE_SQL . ' ORDER BY (category <=> ?) DESC, published_at DESC LIMIT 60',
+        [$post['id'], blog_now(), ($post['category'] ?? '') ?: null]
+    ));
     $scored = [];
-    foreach (blog_posts() as $i => $other) {
-        if ($other['id'] === $post['id']) {
-            continue;
-        }
+    foreach ($candidates as $i => $other) {
         $score = ($other['category'] && $other['category'] === $post['category'] ? 3 : 0)
-            + count(array_intersect($other['tags'] ?? [], $post['tags'] ?? []));
+            + count(array_intersect($other['tags'], $post['tags'] ?? []));
         $scored[] = [$score, -$i, $other];
     }
     rsort($scored);
@@ -140,13 +233,11 @@ function blog_slugify(string $text): string
 /** $slug made unique among posts (ignoring $exceptId) and not a reserved word. */
 function blog_unique_slug(string $slug, ?string $exceptId = null): string
 {
-    $taken = [];
-    foreach (blog_data()['posts'] as $post) {
-        if ($post['id'] !== $exceptId) {
-            $taken[$post['slug']] = true;
-        }
-    }
     $base = in_array($slug, BLOG_RESERVED_SLUGS, true) ? $slug . '-post' : $slug;
+    $taken = array_flip(db_query(
+        'SELECT slug FROM pg_posts WHERE (slug = ? OR slug LIKE ?) AND id <> ?',
+        [$base, addcslashes($base, '%_\\') . '-%', (string) $exceptId]
+    )->fetchAll(PDO::FETCH_COLUMN));
     $candidate = $base;
     for ($n = 2; isset($taken[$candidate]); $n++) {
         $candidate = $base . '-' . $n;
@@ -484,14 +575,10 @@ function blog_route(string $path): ?array
         ];
     }
     $post = blog_find_post('slug', $m[2]);
-    if (!$post) {
-        // A post whose slug was changed: send old links to the new URL.
-        foreach (blog_data()['posts'] as $candidate) {
-            if (in_array($m[2], $candidate['old_slugs'] ?? [], true) && blog_is_live($candidate)) {
-                header('Location: ' . blog_url($candidate), true, 301);
-                exit;
-            }
-        }
+    // A post whose slug was changed: send old links to the new URL.
+    if (!$post && ($target = blog_redirect_target($m[2]))) {
+        header('Location: ' . blog_url($target), true, 301);
+        exit;
     }
     if (!$post || !blog_is_live($post)) {
         return null;
@@ -508,19 +595,9 @@ function blog_listing(array $page): ?array
 {
     $q = trim(mb_substr((string) ($_GET['q'] ?? ''), 0, 100));
     $category = $page['blog_category'] ?? null;
-    $posts = blog_posts();
-    if ($category) {
-        $posts = array_filter($posts, fn($p) => ($p['category'] ?? '') === $category);
-    }
-    if ($q !== '') {
-        $posts = array_filter($posts, function ($p) use ($q) {
-            $haystack = $p['title'] . ' ' . ($p['excerpt'] ?? '') . ' ' . implode(' ', $p['tags'] ?? []) . ' ' . strip_tags($p['content'] ?? '');
-            return mb_stripos($haystack, $q) !== false;
-        });
-    }
-    $posts = array_values($posts);
-    $pages = max(1, (int) ceil(count($posts) / BLOG_PER_PAGE));
     $current = max(1, (int) ($_GET['page'] ?? 1));
+    [$posts, $total] = blog_search($category, $q, BLOG_PER_PAGE, ($current - 1) * BLOG_PER_PAGE);
+    $pages = max(1, (int) ceil($total / BLOG_PER_PAGE));
     if ($current > $pages) {
         return null;
     }
@@ -528,10 +605,10 @@ function blog_listing(array $page): ?array
         'q' => $q,
         'category' => $category,
         'base' => $category ? '/blog/category/' . $category : '/blog',
-        'total' => count($posts),
+        'total' => $total,
         'pages' => $pages,
         'current' => $current,
-        'posts' => array_slice($posts, ($current - 1) * BLOG_PER_PAGE, BLOG_PER_PAGE),
+        'posts' => $posts,
     ];
 }
 

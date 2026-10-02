@@ -5,7 +5,7 @@
  */
 $listing = $blogListing ?? blog_listing($page ?? []) ?? blog_listing([]);
 $categories = blog_categories();
-$counts = array_count_values(array_filter(array_column(blog_posts(), 'category')));
+$counts = blog_category_counts();
 $activeCategory = $listing['category'] ? $categories[$listing['category']] : null;
 $cards = $listing['posts'];
 $featured = !$activeCategory && $listing['q'] === '' && $listing['current'] === 1 && $cards ? array_shift($cards) : null;

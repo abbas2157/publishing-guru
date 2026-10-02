@@ -11,12 +11,13 @@
  * Scopes: a route path ("/", "/contact") for page templates, "section:<name>" for the
  * shared partials in includes/sections, and "global:header" / "global:footer".
  *
- * storage/content.json:
+ * Stored in the database (includes/db.php): pg_page_meta, pg_content, pg_faqs.
+ * cms_data() loads it all once per request in this shape:
  *   meta:    { "/path": { title, description, schema: [ {...JSON-LD...} ] } }
  *   content: { scope: { key: value } }   text units store plain text, HTML units inline HTML,
  *                                        alt units ("a..." keys) the alt attribute
  *   faqs:    { "/path": { title, intro, items: [ { q, a } ] } }   answers are inline HTML
- *   updated: { scope: ISO 8601 }
+ *   updated: { "/path": ISO 8601 }
  */
 
 const CMS_VOID_TAGS = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'];
@@ -32,33 +33,74 @@ const CMS_SKIP_CLOSE = '<!--/cms:skip-->';
 function cms_data(): array
 {
     static $data = null;
-    if ($data === null || !empty($GLOBALS['cms_reload'])) {
-        unset($GLOBALS['cms_reload']);
-        $json = is_file(CONTENT_FILE) ? json_decode((string) file_get_contents(CONTENT_FILE), true) : null;
-        $data = is_array($json) ? $json : [];
-        $data += ['meta' => [], 'content' => [], 'faqs' => [], 'updated' => []];
+    if ($data !== null && empty($GLOBALS['cms_reload'])) {
+        return $data;
+    }
+    unset($GLOBALS['cms_reload']);
+    $data = ['meta' => [], 'content' => [], 'faqs' => [], 'updated' => []];
+
+    foreach (db_all('SELECT * FROM pg_page_meta') as $row) {
+        $path = $row['path'];
+        $meta = array_filter(['title' => $row['title'], 'description' => $row['description']], fn($v) => $v !== null && $v !== '');
+        if ($row['schema_json'] !== null) {
+            $meta['schema'] = json_decode($row['schema_json'], true) ?: [];
+        }
+        if ($meta) {
+            $data['meta'][$path] = $meta;
+        }
+        $heading = array_filter(['title' => $row['faq_title'], 'intro' => $row['faq_intro']], fn($v) => $v !== null && $v !== '');
+        if ($heading) {
+            $data['faqs'][$path] = $heading + ['items' => []];
+        }
+        $data['updated'][$path] = db_iso($row['updated_at']);
+    }
+    foreach (db_all('SELECT scope, item_key, value FROM pg_content') as $row) {
+        $data['content'][$row['scope']][$row['item_key']] = $row['value'];
+    }
+    foreach (db_all('SELECT path, question, answer FROM pg_faqs ORDER BY path, position, id') as $row) {
+        $data['faqs'][$row['path']]['items'][] = ['q' => $row['question'], 'a' => $row['answer']];
     }
     return $data;
 }
 
-function cms_save(array $data): bool
+/**
+ * Replace everything stored for one scope. $content is the full key => value set; for page
+ * scopes also pass $meta (title, description, schema) and $faq (title, intro, items).
+ */
+function cms_save_scope(string $scope, array $content, ?array $meta = null, ?array $faq = null): void
 {
-    $dir = dirname(CONTENT_FILE);
-    if (!is_dir($dir) && !mkdir($dir, 0775, true)) {
-        return false;
-    }
-    $tmp = CONTENT_FILE . '.' . bin2hex(random_bytes(4)) . '.tmp';
-    // Browsers post UTF-8; anything else is replaced rather than failing the whole save.
-    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
-    if ($json === false || file_put_contents($tmp, $json, LOCK_EX) === false) {
-        return false;
-    }
-    if (!rename($tmp, CONTENT_FILE)) {
-        @unlink($tmp);
-        return false;
-    }
+    db_transaction(function () use ($scope, $content, $meta, $faq) {
+        $now = date('Y-m-d H:i:s');
+        db_query('DELETE FROM pg_content WHERE scope = ?', [$scope]);
+        $insert = db()->prepare('INSERT INTO pg_content (scope, item_key, value, updated_at) VALUES (?, ?, ?, ?)');
+        foreach ($content as $key => $value) {
+            $insert->execute([$scope, (string) $key, (string) $value, $now]);
+        }
+        if ($meta === null) {
+            return;
+        }
+        $items = $faq['items'] ?? [];
+        db_query(
+            'INSERT INTO pg_page_meta (path, title, description, schema_json, faq_title, faq_intro, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description), schema_json = VALUES(schema_json),
+                 faq_title = VALUES(faq_title), faq_intro = VALUES(faq_intro), updated_at = VALUES(updated_at)',
+            [
+                $scope,
+                $meta['title'] ?? null,
+                $meta['description'] ?? null,
+                isset($meta['schema']) ? json_encode($meta['schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) : null,
+                $items ? ($faq['title'] ?? null) : null,
+                $items ? ($faq['intro'] ?? null) : null,
+                $now,
+            ]
+        );
+        db_query('DELETE FROM pg_faqs WHERE path = ?', [$scope]);
+        $insert = db()->prepare('INSERT INTO pg_faqs (path, position, question, answer) VALUES (?, ?, ?, ?)');
+        foreach (array_values($items) as $i => $item) {
+            $insert->execute([$scope, $i, $item['q'], $item['a']]);
+        }
+    });
     $GLOBALS['cms_reload'] = true;
-    return true;
 }
 
 /** Stored meta for a route: any of title, description, schema (list of JSON-LD objects). */

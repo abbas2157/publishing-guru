@@ -414,6 +414,9 @@ body.is-dirty .post-side .save-state { color: hsl(25 80% 38%); font-weight: 700;
 .segmented span { display: block; padding: 7px 0; border-radius: 6px; text-align: center; font-weight: 600; cursor: pointer; color: hsl(var(--muted-foreground)); transition: background-color .15s, color .15s; }
 .segmented input:checked + span { background: hsl(var(--card)); color: hsl(var(--foreground)); box-shadow: var(--shadow); }
 .segmented input:focus-visible + span { outline: 2px solid hsl(var(--accent)); }
+.segmented-3 { grid-template-columns: repeat(3, 1fr); }
+.status-form { display: grid; gap: 8px; padding: 0 20px 20px; }
+.status-form .muted { font-size: 13px; font-weight: 600; }
 
 .featured-preview { position: relative; overflow: hidden; border-radius: var(--radius); border: 1px dashed hsl(var(--border)); background: hsl(var(--background)); }
 .featured-preview img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }

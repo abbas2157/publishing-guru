@@ -71,25 +71,27 @@ function csrf_field(): string
  */
 function admin_queries(): array
 {
-    if (!is_file(QUERIES_FILE)) {
-        return [];
-    }
-    $queries = json_decode((string) file_get_contents(QUERIES_FILE), true);
-    if (!is_array($queries)) {
-        return [];
-    }
-    usort($queries, fn($a, $b) => strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''));
-    return $queries;
+    $rows = db_all('SELECT id, created_at, source, service, name, email, phone, message, status FROM pg_queries ORDER BY created_at DESC, id DESC');
+    return array_map(function ($row) {
+        $row['id'] = (string) $row['id'];
+        $row['created_at'] = db_iso($row['created_at']);
+        return $row;
+    }, $rows);
 }
 
 function admin_find_query(array $queries, string $id): ?array
 {
     foreach ($queries as $query) {
-        if (($query['id'] ?? '') === $id) {
+        if ($query['id'] === $id) {
             return $query;
         }
     }
     return null;
+}
+
+function admin_set_query_status(int $id, string $status): void
+{
+    db_query('UPDATE pg_queries SET status = ? WHERE id = ?', [$status, $id]);
 }
 
 /** Contact-form service value (or homepage label) to a display label. */

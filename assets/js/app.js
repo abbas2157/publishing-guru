@@ -577,14 +577,33 @@
                 submit.disabled = true;
                 submit.innerHTML = ICON.loader('mr-2 h-4 w-4 animate-spin') + 'Sending...';
 
-                invoke('send-contact-email', payload).then(function () {
+                // Save the query on our server (admin dashboard) and send the email notification;
+                // the visitor sees success if either one worked.
+                var saveError = null;
+                var saved = fetch(APP.basePath + '/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.assign({ source: kind, website: field('website') ? field('website').value : '' }, payload))
+                }).then(function (res) {
+                    return res.json().catch(function () { return {}; }).then(function (body) {
+                        if (!res.ok) throw new Error(body.error || 'Could not save the message (' + res.status + ')');
+                        return true;
+                    });
+                }).catch(function (err) { console.error('Error saving message:', err); saveError = err; return false; });
+                var mailed = invoke('send-contact-email', payload).then(function () { return true; }, function (err) {
+                    console.error('Error sending email:', err);
+                    return false;
+                });
+
+                Promise.all([saved, mailed]).then(function (results) {
+                    if (!results[0] && !results[1]) {
+                        sonner.error(saveError && /Too many|valid email/.test(saveError.message) ? saveError.message : 'Failed to send message. Please try again.');
+                        return;
+                    }
                     sonner.success(successMessage);
                     track('Lead', lead);
                     ['name', 'email', 'phone', 'message'].forEach(function (n) { field(n).value = ''; });
                     if (select) select.setValue('');
-                }).catch(function (err) {
-                    console.error('Error sending email:', err);
-                    sonner.error('Failed to send message. Please try again.');
                 }).then(function () {
                     sending = false;
                     submit.disabled = false;

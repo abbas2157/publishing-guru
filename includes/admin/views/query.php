@@ -28,5 +28,15 @@
             <dt>Source</dt><dd><?= e(source_label($query['source'] ?? null)) ?></dd>
             <dt>Received</dt><dd><?= e(time_ago($query['created_at'] ?? '')) ?></dd>
         </dl>
+        <form method="post" action="<?= url('/admin/queries/' . $query['id'] . '/status') ?>" class="status-form">
+            <?= csrf_field() ?>
+            <span class="muted">Status</span>
+            <div class="segmented segmented-3" role="radiogroup" aria-label="Status">
+<?php foreach (QUERY_STATUSES as $value => $label): ?>
+                <label><input type="radio" name="status" value="<?= $value ?>"<?= ($query['status'] ?? 'new') === $value ? ' checked' : '' ?> onchange="this.form.submit()"><span><?= $label ?></span></label>
+<?php endforeach; ?>
+            </div>
+            <noscript><button type="submit" class="btn btn-ghost btn-sm">Update</button></noscript>
+        </form>
     </aside>
 </div>

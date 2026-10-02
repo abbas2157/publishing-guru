@@ -33,15 +33,22 @@ define('ADMIN_USERNAME', 'admin');
 define('ADMIN_PASSWORD_HASH', '$2y$10$CzBIDTIDEOVWP9ISu0Z74.9DW7vFkQK0j.fR8Rbxsj5ePxIkREcyO');
 define('ADMIN_DISPLAY_NAME', 'Publishing Guru Admin');
 
-// Where contact-form queries are stored (outside web access, see .htaccess).
-define('QUERIES_FILE', __DIR__ . '/storage/queries.json');
+// MySQL / MariaDB: contact queries, page meta & content edits, FAQs and the blog.
+// Put each server's credentials in config.local.php (git-ignored, see config.local.example.php);
+// the defaults below match a stock XAMPP install. Tables are created on first use (includes/db.php).
+if (is_file(__DIR__ . '/config.local.php')) {
+    require __DIR__ . '/config.local.php';
+}
+defined('DB_HOST') || define('DB_HOST', '127.0.0.1');
+defined('DB_PORT') || define('DB_PORT', 3306);
+defined('DB_NAME') || define('DB_NAME', 'publishing_guru');
+defined('DB_USER') || define('DB_USER', 'root');
+defined('DB_PASS') || define('DB_PASS', '');
 
-// Page meta, schema, text and image alt overrides edited in /admin/seo.
-define('CONTENT_FILE', __DIR__ . '/storage/content.json');
+// Legacy JSON storage from before the database; imported once on first use, then renamed *.imported.
+define('LEGACY_STORAGE', __DIR__ . '/storage');
 
-// Blog (/blog, managed in /admin/blog). Posts and categories live in BLOG_FILE; uploaded
-// images go to BLOG_UPLOADS (public, relative to the site root).
-define('BLOG_FILE', __DIR__ . '/storage/blog.json');
+// Uploaded blog images (public, relative to the site root).
 define('BLOG_UPLOADS', 'uploads/blog');
 define('BLOG_PER_PAGE', 9);
 define('BLOG_DEFAULT_AUTHOR', 'Publishing Guru Team');

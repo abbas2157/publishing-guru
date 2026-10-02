@@ -12,3 +12,6 @@ storage/
 
 # Uploaded blog images (user content, back up with storage/)
 uploads/
+
+# Server-specific settings (database credentials)
+config.local.php

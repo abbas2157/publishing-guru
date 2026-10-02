@@ -4,6 +4,7 @@
  */
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/functions.php';
+require __DIR__ . '/includes/db.php';
 require __DIR__ . '/includes/cms.php';
 require __DIR__ . '/includes/blog.php';
 
@@ -26,6 +27,12 @@ if ($path !== '/') {
 if ($path === '/admin' || strpos($path, '/admin/') === 0) {
     require __DIR__ . '/includes/admin/bootstrap.php';
     exit;
+}
+
+// Contact-form submissions (stored for /admin/queries).
+if ($path === '/api/contact') {
+    require __DIR__ . '/includes/contact.php';
+    contact_handle();
 }
 
 // XML sitemap generated from the route table; lastmod follows the page template.

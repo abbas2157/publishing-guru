@@ -1,7 +1,7 @@
 <?php
 /** Blog categories: add, rename, describe, delete. Expects $error, $message. */
 $categories = blog_categories();
-$counts = array_count_values(array_filter(array_column(blog_posts(true), 'category')));
+$counts = blog_category_counts(true);
 ?>
 <a href="<?= url('/admin/blog') ?>" class="back-link"><?= admin_icon('arrow-left') ?> All posts</a>
 

@@ -5,7 +5,7 @@ RewriteEngine On
 
 # Block direct access to templates and config
 RewriteRule ^(includes|pages|storage)(/|$) - [F,L]
-RewriteRule ^config\.php$ - [F,L]
+RewriteRule ^config(\.local|\.local\.example)?\.php$ - [F,L]
 
 # Serve existing files (assets, images, PDF, robots.txt) directly;
 # route every other request through the front controller.
