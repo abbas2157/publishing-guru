@@ -8,6 +8,10 @@ require __DIR__ . '/includes/db.php';
 require __DIR__ . '/includes/cms.php';
 require __DIR__ . '/includes/blog.php';
 
+if (NOINDEX) {
+    header('X-Robots-Tag: noindex, nofollow');
+}
+
 $routes = require __DIR__ . '/includes/routes.php';
 
 // Resolve the request path relative to the base path.

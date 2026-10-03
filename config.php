@@ -45,6 +45,15 @@ defined('DB_NAME') || define('DB_NAME', 'publishing_guru');
 defined('DB_USER') || define('DB_USER', 'root');
 defined('DB_PASS') || define('DB_PASS', '');
 
+// Keep development/staging copies out of search engines: every page gets a noindex
+// meta tag and X-Robots-Tag header unless it is served from the production host.
+// Force it either way with define('NOINDEX', true|false) in config.local.php.
+defined('NOINDEX') || define('NOINDEX', !in_array(
+    strtolower(preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? '')),
+    [parse_url(SITE_URL, PHP_URL_HOST), preg_replace('/^www\./', '', parse_url(SITE_URL, PHP_URL_HOST))],
+    true
+));
+
 // Legacy JSON storage from before the database; imported once on first use, then renamed *.imported.
 define('LEGACY_STORAGE', __DIR__ . '/storage');
 

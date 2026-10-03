@@ -57,9 +57,9 @@ $appConfig = [
     <meta name="description" content="<?= e($description) ?>" />
     <meta name="author" content="Publishing Guru" />
 <?php if ($isNotFound): ?>
-    <meta name="robots" content="noindex, follow" />
+    <meta name="robots" content="<?= NOINDEX ? 'noindex, nofollow' : 'noindex, follow' ?>" />
 <?php else: ?>
-    <meta name="robots" content="<?= e($page['robots'] ?? 'index, follow, max-image-preview:large') ?>" />
+    <meta name="robots" content="<?= NOINDEX ? 'noindex, nofollow' : e($page['robots'] ?? 'index, follow, max-image-preview:large') ?>" />
     <link rel="canonical" href="<?= e($canonical) ?>">
 <?php endif; ?>
     <meta name="theme-color" content="#f2eee8" />
