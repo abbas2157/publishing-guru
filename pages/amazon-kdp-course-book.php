@@ -1,39 +1,3 @@
-<!-- Shown while a Stripe session_id from the URL is being verified (inserted by app.js) -->
-<template id="verify-overlay-template">
-    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div class="flex flex-col items-center gap-4"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle w-8 h-8 animate-spin text-primary">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-            </svg>
-            <p class="text-foreground font-medium">Verifying your purchase...</p>
-        </div>
-    </div>
-</template>
-<!-- Purchase success dialog (cloned into <body> by app.js) -->
-<template id="purchase-dialog-template">
-    <div data-state="open" class="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" data-aria-hidden="true" aria-hidden="true" style="pointer-events: auto;"></div>
-    <div role="dialog" aria-describedby="purchase-dialog-description" aria-labelledby="purchase-dialog-title" data-state="open" class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg sm:max-w-md" tabindex="-1" style="pointer-events: auto;">
-        <div class="flex flex-col space-y-1.5 text-center sm:text-left">
-            <h2 id="purchase-dialog-title" class="font-semibold tracking-tight flex items-center gap-2 text-2xl"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles w-6 h-6 text-primary">
-                    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
-                    <path d="M20 3v4"></path>
-                    <path d="M22 5h-4"></path>
-                    <path d="M4 17v2"></path>
-                    <path d="M5 18H3"></path>
-                </svg>Payment Successful!</h2>
-            <p id="purchase-dialog-description" class="text-muted-foreground text-base pt-2">Thank you for purchasing the Amazon KDP Course Book. Your download is ready!</p>
-        </div>
-        <div class="flex flex-col gap-4 pt-4"><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 px-4 py-2 bg-accent text-accent-foreground hover:bg-accent/90 w-full" data-download><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download w-5 h-5 mr-2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" x2="12" y1="15" y2="3"></line>
-                </svg>Download PDF Course Book</button>
-            <p class="text-sm text-muted-foreground text-center" data-download-unavailable>PDF not available yet. Please contact support via WhatsApp.</p><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/80 text-hover:text-primary-foreground h-10 px-4 py-2 w-full" data-dialog-close>Close</button>
-        </div><button type="button" class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground" data-dialog-close><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-4 w-4">
-                <path d="M18 6 6 18"></path>
-                <path d="m6 6 12 12"></path>
-            </svg><span class="sr-only">Close</span></button>
-    </div>
-</template>
 <section class="pt-24"><img src="<?= asset('assets/kdp-banner-DbGG8k1i.webp') ?>" width="1920" height="734" fetchpriority="high" fetchpriority="high" alt="KDP Made Simple – A 30-Minute Guide to Mastering the Science of Profitable Publishing" class="w-full h-auto object-cover"></section>
 <section class="py-16 px-4 bg-gradient-to-b from-primary/5 to-background">
     <div class="container mx-auto max-w-4xl text-center">
@@ -59,7 +23,7 @@
                     <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>Beginner-Friendly</div>
-        </div><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-6 sm:px-8 py-3 text-base sm:text-lg" data-checkout><span>Buy Course Book – $35</span><img src="<?= asset('assets/Arrow-black-AVsc0Ug-.svg') ?>" width="37" height="10" loading="lazy" decoding="async" alt="Arrow" class="ml-2 w-3 h-3 sm:w-4 sm:h-4"></button>
+        </div><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-6 sm:px-8 py-3 text-base sm:text-lg" data-href="https://wa.me/<?= WHATSAPP_NUMBER ?>?text=Hi!%20I%20want%20to%20buy%20the%20Amazon%20KDP%20Course%20Book" data-target="_blank" data-track-checkout="Amazon KDP Course Book"><span>Buy Course Book – $35</span><img src="<?= asset('assets/Arrow-black-AVsc0Ug-.svg') ?>" width="37" height="10" loading="lazy" decoding="async" alt="Arrow" class="ml-2 w-3 h-3 sm:w-4 sm:h-4"></button>
     </div>
 </section>
 <section class="py-16 px-4 bg-card">
@@ -114,7 +78,7 @@
                             </svg></div><span class="text-foreground">Profit &amp; Scaling Strategy</span>
                     </li>
                 </ul>
-            </div><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-6 sm:px-8 py-3 text-base sm:text-lg" data-checkout><span>Buy Now – $35</span><img src="<?= asset('assets/Arrow-black-AVsc0Ug-.svg') ?>" width="37" height="10" loading="lazy" decoding="async" alt="Arrow" class="ml-2 w-3 h-3 sm:w-4 sm:h-4"></button>
+            </div><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-6 sm:px-8 py-3 text-base sm:text-lg" data-href="https://wa.me/<?= WHATSAPP_NUMBER ?>?text=Hi!%20I%20want%20to%20buy%20the%20Amazon%20KDP%20Course%20Book" data-target="_blank" data-track-checkout="Amazon KDP Course Book"><span>Buy Now – $35</span><img src="<?= asset('assets/Arrow-black-AVsc0Ug-.svg') ?>" width="37" height="10" loading="lazy" decoding="async" alt="Arrow" class="ml-2 w-3 h-3 sm:w-4 sm:h-4"></button>
         </div>
     </div>
 </section>
@@ -155,6 +119,6 @@
     <div class="container mx-auto max-w-2xl text-center">
         <h2 class="font-playfair text-3xl md:text-4xl font-bold text-foreground mb-6">Start Your KDP Journey Today</h2>
         <p class="text-muted-foreground mb-8">Get instant access to the complete Amazon KDP Course Book.</p>
-        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto" data-checkout><span>Buy Course Book – $35</span><img src="<?= asset('assets/Arrow-black-AVsc0Ug-.svg') ?>" width="37" height="10" loading="lazy" decoding="async" alt="Arrow" class="ml-2 w-3 h-3 sm:w-4 sm:h-4"></button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 w-full sm:w-auto border-primary" data-href="https://wa.me/<?= WHATSAPP_NUMBER ?>?text=Hi!%20I%20need%20support%20regarding%20the%20Amazon%20KDP%20Course%20Book" data-target="_blank"><span>WhatsApp Support</span><img src="<?= icon('call') ?>" alt="Call" class="ml-2 w-3 h-3 sm:w-4 sm:h-4"></button></div>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 h-10 bg-accent text-accent-foreground hover:bg-accent/90 px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto" data-href="https://wa.me/<?= WHATSAPP_NUMBER ?>?text=Hi!%20I%20want%20to%20buy%20the%20Amazon%20KDP%20Course%20Book" data-target="_blank" data-track-checkout="Amazon KDP Course Book"><span>Buy Course Book – $35</span><img src="<?= asset('assets/Arrow-black-AVsc0Ug-.svg') ?>" width="37" height="10" loading="lazy" decoding="async" alt="Arrow" class="ml-2 w-3 h-3 sm:w-4 sm:h-4"></button><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 w-full sm:w-auto border-primary" data-href="https://wa.me/<?= WHATSAPP_NUMBER ?>?text=Hi!%20I%20need%20support%20regarding%20the%20Amazon%20KDP%20Course%20Book" data-target="_blank"><span>WhatsApp Support</span><img src="<?= icon('call') ?>" alt="Call" class="ml-2 w-3 h-3 sm:w-4 sm:h-4"></button></div>
     </div>
 </section>

@@ -1,7 +1,7 @@
 <?php
 /**
  * POST /api/contact: store a contact-form submission in pg_queries (shown in /admin/queries).
- * Called by app.js alongside the Supabase email function. Responds with JSON.
+ * Called by the contact forms in app.js. Responds with JSON.
  */
 
 const CONTACT_RATE_LIMIT = 5;        // submissions per IP ...

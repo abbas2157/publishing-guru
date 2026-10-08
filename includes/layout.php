@@ -43,8 +43,6 @@ if (!$isNotFound && $path !== '/') {
 }
 $appConfig = [
     'basePath' => BASE_PATH,
-    'supabaseUrl' => SUPABASE_URL,
-    'supabaseKey' => SUPABASE_ANON_KEY,
     'track' => $page['track'] ?? null,
 ];
 ?>

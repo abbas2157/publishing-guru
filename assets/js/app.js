@@ -2,8 +2,8 @@
  * Publishing Guru — front-end behaviour.
  *
  * Vanilla-JS port of the interactive parts of the original React build:
- * scroll reveal, mobile menu sheet, select dropdowns, toasts (Sonner + shadcn),
- * contact forms, course checkout / purchase verification, and Facebook Pixel events.
+ * scroll reveal, mobile menu sheet, select dropdowns, toasts (Sonner),
+ * contact forms, and Facebook Pixel events.
  * Markup and class names mirror what the original components rendered.
  */
 (function () {
@@ -23,7 +23,6 @@
         loader: function (cls) {
             return lucide('loader', cls, '<path d="M12 2v4"></path><path d="m16.2 7.8 2.9-2.9"></path><path d="M18 12h4"></path><path d="m16.2 16.2 2.9 2.9"></path><path d="M12 18v4"></path><path d="m4.9 19.1 2.9-2.9"></path><path d="M2 12h4"></path><path d="m4.9 4.9 2.9 2.9"></path>');
         },
-        loaderCircle: function (cls) { return lucide('loader-circle', cls, '<path d="M21 12a9 9 0 1 1-6.219-8.56"></path>'); },
         check: function (cls) { return lucide('check', cls, '<path d="M20 6 9 17l-5-5"></path>'); },
         x: function (cls) { return lucide('x', cls, '<path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>'); }
     };
@@ -458,81 +457,6 @@
     })();
 
     /* ------------------------------------------------------------------
-     * shadcn/Radix toast (used by the course book page) — one at a time
-     * ---------------------------------------------------------------- */
-    var shadcnToast = (function () {
-        var DURATION = 5000;
-        var current = null;
-        var viewport = $('div[role=region][aria-label^="Notifications (F8)"] ol');
-
-        function dismiss(t) {
-            if (!t || t.closed) return;
-            t.closed = true;
-            clearTimeout(t.timer);
-            animateOut([t.el]);
-            if (current === t) current = null;
-        }
-
-        return function (opts) {
-            if (!viewport) return;
-            dismiss(current);
-            var variant = opts.variant === 'destructive'
-                ? 'destructive group border-destructive bg-destructive text-destructive-foreground'
-                : 'border bg-background text-foreground';
-            var li = document.createElement('li');
-            li.setAttribute('role', 'status');
-            li.setAttribute('aria-live', 'off');
-            li.setAttribute('aria-atomic', 'true');
-            li.setAttribute('tabindex', '0');
-            li.setAttribute('data-state', 'open');
-            li.setAttribute('data-swipe-direction', 'right');
-            li.setAttribute('data-radix-collection-item', '');
-            li.className = 'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full ' + variant;
-            li.style.cssText = 'user-select: none; touch-action: none;';
-            li.innerHTML = '<div class="grid gap-1">' +
-                (opts.title ? '<div class="text-sm font-semibold">' + escapeHtml(opts.title) + '</div>' : '') +
-                (opts.description ? '<div class="text-sm opacity-90">' + escapeHtml(opts.description) + '</div>' : '') +
-                '</div><button type="button" class="absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600" toast-close="" data-radix-toast-announce-exclude="">' + ICON.x('h-4 w-4') + '</button>';
-            viewport.appendChild(li);
-
-            var t = { el: li, closed: false, timer: null, remaining: DURATION, started: 0 };
-            var start = function () { t.started = Date.now(); t.timer = setTimeout(function () { dismiss(t); }, t.remaining); };
-            viewport.addEventListener('mouseenter', function () { clearTimeout(t.timer); t.remaining -= Date.now() - t.started; });
-            viewport.addEventListener('mouseleave', function () { if (!t.closed) start(); });
-            li.querySelector('[toast-close]').addEventListener('click', function () { dismiss(t); });
-            current = t;
-            start();
-        };
-    })();
-
-    /* ------------------------------------------------------------------
-     * Supabase Edge Functions
-     * ---------------------------------------------------------------- */
-    function invoke(fn, body) {
-        return fetch(APP.supabaseUrl + '/functions/v1/' + fn, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + APP.supabaseKey,
-                'apikey': APP.supabaseKey
-            },
-            body: JSON.stringify(body || {})
-        }).then(function (res) {
-            return res.text().then(function (text) {
-                var data = null;
-                try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
-                if (!res.ok) {
-                    var err = new Error('Edge Function returned a non-2xx status code');
-                    err.status = res.status;
-                    err.data = data;
-                    throw err;
-                }
-                return data;
-            });
-        });
-    }
-
-    /* ------------------------------------------------------------------
      * Contact forms (home "Get in Touch" + /contact "Let's Connect")
      * ---------------------------------------------------------------- */
     var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -564,7 +488,7 @@
                 var payload, successMessage, lead;
                 if (kind === 'contact') {
                     payload = { service: serviceValue, name: data.name, email: data.email, phone: data.phone, message: data.message };
-                    successMessage = "Thank you for your message! We'll get back to you within 24 hours. A confirmation email has been sent to your inbox.";
+                    successMessage = "Thank you for your message! We'll get back to you within 24 hours.";
                     lead = { content_name: serviceValue, content_category: 'Service Inquiry' };
                 } else {
                     var service = (select && select.label()) || 'General Inquiry';
@@ -577,106 +501,29 @@
                 submit.disabled = true;
                 submit.innerHTML = ICON.loader('mr-2 h-4 w-4 animate-spin') + 'Sending...';
 
-                // Save the query on our server (admin dashboard) and send the email notification;
-                // the visitor sees success if either one worked.
-                var saveError = null;
-                var saved = fetch(APP.basePath + '/api/contact', {
+                // Save the query on our server (shown in the admin dashboard).
+                fetch(APP.basePath + '/api/contact', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(Object.assign({ source: kind, website: field('website') ? field('website').value : '' }, payload))
                 }).then(function (res) {
                     return res.json().catch(function () { return {}; }).then(function (body) {
                         if (!res.ok) throw new Error(body.error || 'Could not save the message (' + res.status + ')');
-                        return true;
                     });
-                }).catch(function (err) { console.error('Error saving message:', err); saveError = err; return false; });
-                var mailed = invoke('send-contact-email', payload).then(function () { return true; }, function (err) {
-                    console.error('Error sending email:', err);
-                    return false;
-                });
-
-                Promise.all([saved, mailed]).then(function (results) {
-                    if (!results[0] && !results[1]) {
-                        sonner.error(saveError && /Too many|valid email/.test(saveError.message) ? saveError.message : 'Failed to send message. Please try again.');
-                        return;
-                    }
+                }).then(function () {
                     sonner.success(successMessage);
                     track('Lead', lead);
                     ['name', 'email', 'phone', 'message'].forEach(function (n) { field(n).value = ''; });
                     if (select) select.setValue('');
+                }, function (err) {
+                    console.error('Error saving message:', err);
+                    sonner.error(/Too many|valid email/.test(err.message) ? err.message : 'Failed to send message. Please try again.');
                 }).then(function () {
                     sending = false;
                     submit.disabled = false;
                     submit.innerHTML = submitLabel;
                 });
             });
-        });
-    }
-
-    /* ------------------------------------------------------------------
-     * Amazon KDP Course Book: Stripe checkout + purchase verification
-     * ---------------------------------------------------------------- */
-    function initCourseBook() {
-        var buttons = $$('[data-checkout]');
-        if (!buttons.length) return;
-        var labels = buttons.map(function (b) { return b.innerHTML; });
-
-        var setLoading = function (loading) {
-            buttons.forEach(function (b, i) {
-                b.disabled = loading;
-                b.innerHTML = loading ? ICON.loaderCircle('w-4 h-4 mr-2 animate-spin') + 'Processing...' : labels[i];
-            });
-        };
-
-        buttons.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                setLoading(true);
-                invoke('create-checkout-session', {}).then(function (data) {
-                    if (data && data.url) window.location.href = data.url;
-                    else throw new Error('No checkout URL received');
-                }).catch(function (err) {
-                    console.error('Error creating checkout:', err);
-                    shadcnToast({ title: 'Checkout Error', description: 'Could not start checkout. Please try again.', variant: 'destructive' });
-                    setLoading(false);
-                });
-            });
-        });
-
-        // Returning from Stripe with ?session_id=...
-        var sessionId = new URLSearchParams(window.location.search).get('session_id');
-        if (!sessionId) return;
-
-        var header = $('header');
-        var overlay = $('#verify-overlay-template').content.firstElementChild.cloneNode(true);
-        header.parentNode.insertBefore(overlay, header.nextSibling);
-
-        invoke('verify-purchase', { session_id: sessionId }).then(function (data) {
-            if (data && data.success) {
-                history.replaceState(null, '', window.location.pathname);
-                openPurchaseDialog(data.download_url || null);
-            } else {
-                shadcnToast({ title: 'Verification Failed', description: (data && data.error) || 'Could not verify your purchase. Please contact support.', variant: 'destructive' });
-            }
-        }).catch(function (err) {
-            console.error('Error verifying purchase:', err);
-            shadcnToast({ title: 'Error', description: 'Something went wrong. Please contact support.', variant: 'destructive' });
-        }).then(function () {
-            overlay.remove();
-        });
-    }
-
-    function openPurchaseDialog(downloadUrl) {
-        openModal($('#purchase-dialog-template'), {
-            onOpen: function (content) {
-                var download = $('[data-download]', content);
-                var unavailable = $('[data-download-unavailable]', content);
-                if (downloadUrl) unavailable.remove();
-                else download.disabled = true;
-                download.addEventListener('click', function () {
-                    if (downloadUrl) window.open(downloadUrl, '_blank');
-                    else shadcnToast({ title: 'Download Unavailable', description: 'The PDF is not available yet. Please contact support via WhatsApp.', variant: 'destructive' });
-                });
-            }
         });
     }
 
@@ -720,7 +567,6 @@
         initMobileMenu();
         var selects = $$('button[role=combobox]').map(function (t) { return new Select(t); });
         initContactForms(selects);
-        initCourseBook();
         initLinks();
         initCopyLinks();
         if (APP.track) track('ViewContent', APP.track);

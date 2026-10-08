@@ -22,11 +22,6 @@ define('DEFAULT_OG_IMAGE', 'assets/og-image.jpg');
 // Facebook Pixel.
 define('FB_PIXEL_ID', '1365172541683278');
 
-// Supabase backend (Edge Functions: send-contact-email, create-checkout-session, verify-purchase).
-// The anon key is a public, browser-safe key — the same one the original site ships.
-define('SUPABASE_URL', 'https://zlpxtvozzuaypgxpnhqo.supabase.co');
-define('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpscHh0dm96enVheXBneHBuaHFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwOTczMjIsImV4cCI6MjA3MzY3MzMyMn0.zcfiIpNc3R05pKL3zPV37rZQ0pnInMB2LaGejpEy3mc');
-
 // Admin dashboard login (/admin). Store only a password_hash() — never the plain password.
 // Generate a new hash with: php -r "echo password_hash('new-password', PASSWORD_DEFAULT);"
 define('ADMIN_USERNAME', 'admin');
