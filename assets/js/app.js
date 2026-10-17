@@ -101,7 +101,8 @@
         var frag = template.content.cloneNode(true);
         var nodes = Array.prototype.slice.call(frag.children);
         var overlay = nodes[0], content = nodes[1];
-        var previousFocus = document.activeElement;
+        // Safari doesn't focus a tapped button, so callers can name where focus returns on close.
+        var previousFocus = opts.returnFocus || document.activeElement;
         document.body.appendChild(frag);
         lockScroll();
 
@@ -119,6 +120,16 @@
         layers.push(layer);
 
         overlay.addEventListener('pointerdown', function (e) { e.preventDefault(); layer.close(); });
+        // Keep Tab / Shift+Tab inside the dialog while it is open.
+        content.addEventListener('keydown', function (e) {
+            if (e.key !== 'Tab') return;
+            var tabbable = $$('a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])', content)
+                .filter(function (el) { return el.offsetParent !== null; });
+            if (!tabbable.length) return;
+            var first = tabbable[0], last = tabbable[tabbable.length - 1];
+            if (e.shiftKey && (document.activeElement === first || document.activeElement === content)) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        });
         $$('[data-dialog-close]', content).forEach(function (btn) {
             btn.addEventListener('click', function () { layer.close(); });
         });
@@ -151,6 +162,18 @@
     }
 
     /* ------------------------------------------------------------------
+     * Mark nav links to the current page (aria-current + underline style)
+     * ---------------------------------------------------------------- */
+    function markCurrentLinks(root) {
+        var here = location.pathname.replace(/\/+$/, '') || '/';
+        $$('a[href]', root).forEach(function (a) {
+            if (a.closest('form') || a.target === '_blank') return;
+            var path = a.pathname.replace(/\/+$/, '') || '/';
+            if (a.origin === location.origin && path === here && !a.search) a.setAttribute('aria-current', 'page');
+        });
+    }
+
+    /* ------------------------------------------------------------------
      * Mobile menu sheet
      * ---------------------------------------------------------------- */
     function initMobileMenu() {
@@ -163,16 +186,20 @@
             trigger.setAttribute('aria-expanded', 'true');
             trigger.setAttribute('data-state', 'open');
             openModal(template, {
+                returnFocus: trigger,
                 onOpen: function (content) {
                     var toggle = $('[data-services-toggle]', content);
                     var list = $('template[data-services-list]', content);
                     var chevron = toggle.querySelector(':scope > svg');
                     var rendered = null;
+                    markCurrentLinks(content);
                     var render = function () {
+                        toggle.setAttribute('aria-expanded', servicesOpen ? 'true' : 'false');
                         chevron.setAttribute('class', 'lucide lucide-chevron-down w-4 h-4 transition-transform ' + (servicesOpen ? 'rotate-180' : ''));
                         if (servicesOpen && !rendered) {
                             rendered = list.content.firstElementChild.cloneNode(true);
                             list.parentNode.insertBefore(rendered, list);
+                            markCurrentLinks(rendered);
                         } else if (!servicesOpen && rendered) {
                             rendered.remove();
                             rendered = null;
@@ -461,6 +488,25 @@
      * ---------------------------------------------------------------- */
     var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    var ALERT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>';
+
+    /** Field rules, worded like the server's (includes/contact.php). Returns an error message or ''. */
+    function contactFieldError(name, value) {
+        value = (value || '').trim();
+        switch (name) {
+            case 'name': return value ? '' : 'Please enter your name.';
+            case 'email':
+                if (!value) return 'Please enter your email address.';
+                return EMAIL_RE.test(value) ? '' : 'That email doesn’t look right. Please check it (e.g. name@example.com).';
+            case 'phone': return !value || value.replace(/\D/g, '').length >= 7 ? '' : 'Please enter a valid phone number, or leave it blank.';
+            case 'message':
+                if (!value) return 'Please tell us a little about your project.';
+                return value.length >= 10 ? '' : 'Please add a few more details (at least 10 characters).';
+            case 'service': return value ? '' : 'Please choose a service.';
+        }
+        return '';
+    }
+
     function initContactForms(selects) {
         $$('form[data-contact-form]').forEach(function (form) {
             var kind = form.getAttribute('data-contact-form');
@@ -469,62 +515,191 @@
             var submit = $('button[type=submit]', form);
             var submitLabel = submit.innerHTML;
             var field = function (name) { return form.querySelector('[name="' + name + '"]'); };
-            var sending = false;
+            var sending = false, attempted = false, alertBox = null;
+
+            // Our own messages replace the browser's validation bubbles.
+            form.noValidate = true;
+            var fields = { name: field('name'), email: field('email'), phone: field('phone'), message: field('message') };
+            if (kind === 'contact' && select) fields.service = trigger;
+            var valueOf = function (name) { return name === 'service' ? select.value() : fields[name].value; };
+
+            /** Show (or clear, with msg '') the error under a field and mark it invalid for screen readers. */
+            var setError = function (name, msg) {
+                var el = fields[name];
+                if (!el) return;
+                var wrap = el.closest('.space-y-2') || el.parentNode;
+                var id = (el.id || kind + '-' + name) + '-error';
+                var p = document.getElementById(id);
+                var described = (el.getAttribute('aria-describedby') || '').split(' ').filter(function (x) { return x && x !== id; });
+                if (!msg) {
+                    if (p) p.remove();
+                    el.removeAttribute('aria-invalid');
+                } else {
+                    if (!p) {
+                        p = document.createElement('p');
+                        p.className = 'field-error';
+                        p.id = id;
+                        wrap.appendChild(p);
+                    }
+                    p.innerHTML = ALERT_ICON + '<span>' + escapeHtml(msg) + '</span>';
+                    el.setAttribute('aria-invalid', 'true');
+                    described.push(id);
+                }
+                if (described.length) el.setAttribute('aria-describedby', described.join(' '));
+                else el.removeAttribute('aria-describedby');
+            };
+            /** Check every field; returns the top-most invalid one on the page (to focus), or null. */
+            var validate = function () {
+                var invalid = [];
+                Object.keys(fields).forEach(function (name) {
+                    var msg = contactFieldError(name, valueOf(name));
+                    setError(name, msg);
+                    if (msg) invalid.push(fields[name]);
+                });
+                invalid.sort(function (a, b) { return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1; });
+                return invalid[0] || null;
+            };
+            var clearErrors = function () { Object.keys(fields).forEach(function (n) { setError(n, ''); }); };
+
+            // After the first attempt, re-check each field as it's edited (errors clear as soon as they're fixed).
+            ['name', 'email', 'phone', 'message'].forEach(function (name) {
+                var recheck = function () { if (attempted || fields[name].hasAttribute('aria-invalid')) setError(name, contactFieldError(name, valueOf(name))); };
+                fields[name].addEventListener('input', recheck);
+                fields[name].addEventListener('blur', recheck);
+            });
+            if (fields.service) {
+                new MutationObserver(function () { if (attempted) setError('service', contactFieldError('service', valueOf('service'))); })
+                    .observe(trigger, { childList: true, subtree: true, characterData: true });
+            }
+
+            /** Form-level problem (server/network): message plus other ways to reach us. */
+            var showAlert = function (msg) {
+                if (!alertBox) {
+                    alertBox = document.createElement('div');
+                    alertBox.className = 'form-alert';
+                    alertBox.setAttribute('role', 'alert');
+                    submit.parentNode.insertBefore(alertBox, submit);
+                }
+                alertBox.innerHTML = ALERT_ICON + '<div><p><strong>' + escapeHtml(msg) + '</strong></p><p>You can also reach us on '
+                    + '<a href="https://wa.me/' + encodeURIComponent(APP.whatsapp) + '" target="_blank" rel="noopener noreferrer">WhatsApp</a> or at '
+                    + '<a href="mailto:' + escapeHtml(APP.email) + '">' + escapeHtml(APP.email) + '</a>.</p></div>';
+            };
+            var clearAlert = function () { if (alertBox) { alertBox.remove(); alertBox = null; } };
+
+            /** Swap the form for a confirmation panel; "Send another message" brings back a clean form. */
+            var showSuccess = function (data) {
+                var first = data.name.trim().split(/\s+/)[0];
+                var panel = document.createElement('div');
+                panel.className = 'form-success';
+                panel.setAttribute('role', 'status');
+                panel.setAttribute('tabindex', '-1');
+                panel.innerHTML = '<span class="form-success-icon">' + ICON.check('h-7 w-7') + '</span>'
+                    + '<h3>Message sent!</h3>'
+                    + '<p>Thanks, ' + escapeHtml(first) + '. We’ve received your message and will reply to <strong>' + escapeHtml(data.email.trim()) + '</strong> within 24 hours.</p>'
+                    + '<div class="form-success-actions">'
+                    + '<a href="' + APP.basePath + '/book-call" class="form-success-primary">Book a free call</a>'
+                    + '<button type="button" class="form-success-secondary">Send another message</button></div>';
+                form.hidden = true;
+                form.parentNode.insertBefore(panel, form.nextSibling);
+                panel.focus({ preventScroll: true });
+                panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                panel.querySelector('.form-success-secondary').addEventListener('click', function () {
+                    panel.remove();
+                    form.hidden = false;
+                    fields.name.focus();
+                });
+            };
 
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 if (sending) return;
-                var data = {
-                    name: field('name').value,
-                    email: field('email').value,
-                    phone: field('phone').value,
-                    message: field('message').value
-                };
-                var serviceValue = select ? select.value() : '';
-                var missing = !data.name || !data.email || !data.message || (kind === 'contact' && !serviceValue);
-                if (missing) { sonner.error('Please fill in all required fields'); return; }
-                if (!EMAIL_RE.test(data.email)) { sonner.error('Please enter a valid email address'); return; }
+                attempted = true;
+                clearAlert();
+                var firstInvalid = validate();
+                if (firstInvalid) { firstInvalid.focus(); return; }
 
-                var payload, successMessage, lead;
+                var data = { name: fields.name.value, email: fields.email.value, phone: fields.phone.value, message: fields.message.value };
+                var service, lead;
                 if (kind === 'contact') {
-                    payload = { service: serviceValue, name: data.name, email: data.email, phone: data.phone, message: data.message };
-                    successMessage = "Thank you for your message! We'll get back to you within 24 hours.";
-                    lead = { content_name: serviceValue, content_category: 'Service Inquiry' };
+                    service = select.value();
+                    lead = { content_name: service, content_category: 'Service Inquiry' };
                 } else {
-                    var service = (select && select.label()) || 'General Inquiry';
-                    payload = { service: service, name: data.name, email: data.email, phone: data.phone, message: data.message };
-                    successMessage = "Thank you for your message! We'll get back to you within 24 hours.";
+                    service = (select && select.label()) || 'General Inquiry';
                     lead = { content_name: service, content_category: 'Homepage Inquiry' };
                 }
 
                 sending = true;
                 submit.disabled = true;
+                submit.setAttribute('aria-busy', 'true');
                 submit.innerHTML = ICON.loader('mr-2 h-4 w-4 animate-spin') + 'Sending...';
 
-                // Save the query on our server (shown in the admin dashboard).
+                // Save the query on our server (shown in the admin dashboard), with where the visit came from.
                 fetch(APP.basePath + '/api/contact', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(Object.assign({ source: kind, website: field('website') ? field('website').value : '' }, payload))
+                    body: JSON.stringify(Object.assign({
+                        source: kind,
+                        service: service,
+                        website: field('website') ? field('website').value : '',
+                        attribution: readAttribution()
+                    }, data))
                 }).then(function (res) {
                     return res.json().catch(function () { return {}; }).then(function (body) {
-                        if (!res.ok) throw new Error(body.error || 'Could not save the message (' + res.status + ')');
+                        if (!res.ok) { var err = new Error(body.error || 'HTTP ' + res.status); err.status = res.status; err.fields = body.fields; throw err; }
                     });
                 }).then(function () {
-                    sonner.success(successMessage);
                     track('Lead', lead);
-                    ['name', 'email', 'phone', 'message'].forEach(function (n) { field(n).value = ''; });
+                    showSuccess(data);
+                    ['name', 'email', 'phone', 'message'].forEach(function (n) { fields[n].value = ''; });
                     if (select) select.setValue('');
+                    attempted = false;
+                    clearErrors();
                 }, function (err) {
-                    console.error('Error saving message:', err);
-                    sonner.error(/Too many|valid email/.test(err.message) ? err.message : 'Failed to send message. Please try again.');
+                    if (err.fields) { // the server disagreed with a field: show it there
+                        var first = null;
+                        Object.keys(err.fields).forEach(function (n) { setError(n, err.fields[n]); if (!first && fields[n]) first = fields[n]; });
+                        if (first) { first.focus(); return; }
+                    }
+                    if (err.status === 429) showAlert('You’ve sent several messages in a short time. Please wait a few minutes and try again.');
+                    else if (!err.status) showAlert('We couldn’t send your message. Please check your internet connection and try again.');
+                    else showAlert('Something went wrong on our side and your message wasn’t sent. Please try again in a moment.');
                 }).then(function () {
                     sending = false;
                     submit.disabled = false;
+                    submit.removeAttribute('aria-busy');
                     submit.innerHTML = submitLabel;
                 });
             });
         });
+    }
+
+    /* ------------------------------------------------------------------
+     * Visit attribution: UTM tags, ad click IDs, referrer and landing page,
+     * captured when the visit starts and sent with contact-form messages.
+     * Kept for this browser tab's session only (sessionStorage).
+     * ---------------------------------------------------------------- */
+    var ATTRIBUTION_KEY = 'pg-attribution';
+    var UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+    var CLICK_IDS = ['gclid', 'fbclid', 'msclkid', 'ttclid'];
+
+    function readAttribution() {
+        try { return JSON.parse(sessionStorage.getItem(ATTRIBUTION_KEY)) || {}; } catch (e) { return {}; }
+    }
+
+    function initAttribution() {
+        var params = new URLSearchParams(location.search);
+        var record = {};
+        UTM_KEYS.forEach(function (k) { var v = params.get(k); if (v) record[k] = v.slice(0, 150); });
+        CLICK_IDS.some(function (k) { if (params.get(k)) { record.click_id = k; return true; } return false; });
+        var campaign = Object.keys(record).length > 0;
+        var existing = readAttribution();
+        // Keep the visit's first record; a new campaign link within the visit replaces it (last click wins).
+        if (existing.landing_page && !campaign) return;
+        var ref = '';
+        try { if (document.referrer && new URL(document.referrer).host !== location.host) ref = document.referrer.slice(0, 255); } catch (e) {}
+        record.referrer = ref;
+        record.landing_page = (location.pathname + location.search).slice(0, 255);
+        try { sessionStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(record)); } catch (e) {}
     }
 
     /* ------------------------------------------------------------------
@@ -543,32 +718,200 @@
                 track('InitiateCheckout', { content_name: btn.getAttribute('data-track-checkout'), content_category: 'CTA Click' });
             });
         });
+        // WhatsApp links (floating button, course book buy/support)
+        $$('[data-track-contact]').forEach(function (link) {
+            link.addEventListener('click', function () { track('Contact', { content_category: 'WhatsApp' }); });
+        });
     }
 
     /* ------------------------------------------------------------------
      * Blog: "Copy link" share button
      * ---------------------------------------------------------------- */
-    function initCopyLinks() {
-        $$('[data-copy-link]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var link = btn.getAttribute('data-copy-link');
-                var fallback = function () { window.prompt('Copy this link:', link); };
-                if (!navigator.clipboard) return fallback();
-                navigator.clipboard.writeText(link).then(function () { sonner.success('Link copied to clipboard'); }, fallback);
+    /** Copy text: Clipboard API, falling back to a hidden textarea (plain-http copies, older browsers). */
+    function copyText(text) {
+        var legacy = function () {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+            document.body.appendChild(ta);
+            ta.select();
+            ta.setSelectionRange(0, text.length);
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) {}
+            ta.remove();
+            return ok ? Promise.resolve() : Promise.reject(new Error('copy failed'));
+        };
+        if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).catch(legacy);
+        return legacy();
+    }
+
+    /** Wire a copy button: copies, shows "Copied!" on the button for 2s, and toasts. */
+    function bindCopy(btn, getText, message) {
+        var label = btn.querySelector('span') || btn;
+        var original = label.textContent, timer = null;
+        btn.addEventListener('click', function () {
+            copyText(getText()).then(function () {
+                label.textContent = 'Copied!';
+                btn.classList.add('is-copied');
+                clearTimeout(timer);
+                timer = setTimeout(function () { label.textContent = original; btn.classList.remove('is-copied'); }, 2000);
+                sonner.success(message);
+            }, function () {
+                sonner.error('Could not copy. Please select the text and copy it manually.');
             });
         });
+    }
+
+    function initCopyLinks() {
+        $$('[data-copy-link]').forEach(function (btn) {
+            bindCopy(btn, function () { return btn.getAttribute('data-copy-link'); }, 'Link copied to clipboard');
+        });
+        $$('[data-copy]').forEach(function (btn) {
+            bindCopy(btn, function () { return btn.getAttribute('data-copy'); }, 'Copied to clipboard');
+        });
+        // Code blocks in blog articles get their own copy button.
+        $$('.blog-content pre').forEach(function (pre) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'copy-btn';
+            btn.setAttribute('aria-label', 'Copy code');
+            btn.innerHTML = '<span>Copy</span>';
+            pre.appendChild(btn);
+            bindCopy(btn, function () { return (pre.querySelector('code') || pre).innerText.replace(/\n?Copy(ied!)?$/, ''); }, 'Code copied to clipboard');
+        });
+    }
+
+    /* ------------------------------------------------------------------
+     * Scroll / reading progress bar: tracks the article on blog posts,
+     * otherwise the whole page
+     * ---------------------------------------------------------------- */
+    function initScrollProgress() {
+        var bar = document.querySelector('[data-scroll-progress] span');
+        if (!bar) return;
+        var article = document.querySelector('.blog-content');
+        var ticking = false;
+        var update = function () {
+            ticking = false;
+            var done, total;
+            // Article: 0 when its top reaches the top of the screen, 1 when its end comes into view.
+            var rect = article && article.getBoundingClientRect();
+            if (rect && rect.height - window.innerHeight > 200) {
+                done = -rect.top;
+                total = rect.height - window.innerHeight;
+            } else { // no article, or one shorter than about a screen: track the whole page
+                done = window.scrollY;
+                total = document.documentElement.scrollHeight - window.innerHeight;
+            }
+            var progress = total > 0 ? Math.min(1, Math.max(0, done / total)) : 0;
+            bar.style.transform = 'scaleX(' + progress.toFixed(4) + ')';
+        };
+        var queue = function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+        window.addEventListener('scroll', queue, { passive: true });
+        window.addEventListener('resize', queue);
+        window.addEventListener('load', queue);
+        update();
+    }
+
+    /* ------------------------------------------------------------------
+     * Cookie banner: the Facebook Pixel only loads after "Accept"
+     * (see the Pixel snippet in includes/layout.php)
+     * ---------------------------------------------------------------- */
+    function initCookieBanner() {
+        var banner = document.querySelector('[data-cookie-banner]');
+        if (!banner) return;
+        var KEY = 'pg-cookie-consent', choice = null;
+        try { choice = localStorage.getItem(KEY); } catch (e) {}
+        if (choice) return;
+        var floating = document.querySelector('[data-floating-actions]');
+        // Keep the floating buttons (back-to-top, WhatsApp) above the banner while it is shown.
+        var lift = function () {
+            if (floating) floating.style.bottom = (window.innerHeight - banner.getBoundingClientRect().top + 16) + 'px';
+        };
+        banner.hidden = false;
+        lift();
+        window.addEventListener('resize', lift);
+        $$('[data-cookie-choice]', banner).forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var value = btn.getAttribute('data-cookie-choice');
+                try { localStorage.setItem(KEY, value); } catch (e) {}
+                if (value === 'granted' && window.loadPixel) window.loadPixel();
+                banner.hidden = true;
+                window.removeEventListener('resize', lift);
+                if (floating) floating.style.bottom = '';
+            });
+        });
+    }
+
+    /* ------------------------------------------------------------------
+     * Back-to-top button: appears after scrolling about a screen down
+     * ---------------------------------------------------------------- */
+    function initBackToTop() {
+        var btn = document.querySelector('[data-back-to-top]');
+        if (!btn) return;
+        var ticking = false;
+        var update = function () {
+            ticking = false;
+            var show = window.scrollY > Math.max(400, window.innerHeight * 0.8);
+            btn.classList.toggle('is-visible', show);
+            btn.tabIndex = show ? 0 : -1;
+        };
+        window.addEventListener('scroll', function () {
+            if (!ticking) { ticking = true; requestAnimationFrame(update); }
+        }, { passive: true });
+        update();
+        btn.addEventListener('click', function () {
+            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+            // Move keyboard focus back to the top of the page too.
+            var logo = document.querySelector('header a[href]');
+            if (logo) logo.focus({ preventScroll: true });
+        });
+    }
+
+    /* ------------------------------------------------------------------
+     * Page-load progress bar: a thin bar at the top while the next page
+     * loads, shown only if that takes more than a moment
+     * ---------------------------------------------------------------- */
+    function initPageProgress() {
+        var bar = document.createElement('div');
+        bar.className = 'page-progress';
+        bar.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(bar);
+        var timer = null;
+        var start = function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { bar.classList.add('is-loading'); }, 150);
+        };
+        var stop = function () { clearTimeout(timer); bar.classList.remove('is-loading'); };
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest && e.target.closest('a[href]');
+            if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            if ((a.target && a.target !== '_self') || a.hasAttribute('download') || a.origin !== location.origin) return;
+            if (a.pathname === location.pathname && a.search === location.search) return; // same page / #anchor
+            start();
+        });
+        $$('form[method=get]').forEach(function (form) { form.addEventListener('submit', start); });
+        // Back/forward cache restores the old page with the bar still running.
+        window.addEventListener('pageshow', stop);
     }
 
     /* ------------------------------------------------------------------
      * Boot
      * ---------------------------------------------------------------- */
     function boot() {
+        initAttribution();
         initReveal();
         initMobileMenu();
         var selects = $$('button[role=combobox]').map(function (t) { return new Select(t); });
         initContactForms(selects);
         initLinks();
         initCopyLinks();
+        initCookieBanner();
+        initBackToTop();
+        initPageProgress();
+        initScrollProgress();
+        $$('header nav').forEach(markCurrentLinks);
         if (APP.track) track('ViewContent', APP.track);
     }
 

@@ -29,7 +29,7 @@ $compact ??= false; ?>
                         <span><strong><?= e($q['name'] ?? '') ?></strong><small><?= e($q['email'] ?? '') ?></small></span>
                     </a>
                 </td>
-                <td><span class="chip"><?= e(service_label($q['service'] ?? null)) ?></span></td>
+                <td><span class="chip"><?= e(service_label($q['service'] ?? null)) ?></span><?php if ($via = query_source_short($q)): ?><small class="via">via <?= e($via) ?></small><?php endif; ?></td>
 <?php if (!$compact): ?>
                 <td class="hide-md"><a href="<?= $href ?>" class="excerpt"><?= e(mb_strimwidth($q['message'] ?? '', 0, 90, '…')) ?></a></td>
 <?php endif; ?>

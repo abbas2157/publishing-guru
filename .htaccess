@@ -7,9 +7,22 @@ RewriteEngine On
 RewriteCond %{HTTP_HOST} ^www\.publishinguru\.com$ [NC]
 RewriteRule ^ https://publishinguru.com%{REQUEST_URI} [R=301,L]
 
+# Force HTTPS on the live domain (X-Forwarded-Proto covers hosts behind a proxy/Cloudflare,
+# where Apache itself sees plain HTTP and a bare %{HTTPS} check would loop).
+RewriteCond %{HTTP_HOST} ^publishinguru\.com$ [NC]
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://publishinguru.com%{REQUEST_URI} [R=301,L]
+
 # Block direct access to templates and config
 RewriteRule ^(includes|pages|storage)(/|$) - [F,L]
 RewriteRule ^config(\.local|\.local\.example)?\.php$ - [F,L]
+# Paid product: never serve PDFs from the web root (the course book is sold via WhatsApp)
+RewriteRule \.pdf$ - [F,L,NC]
+# Hidden files and folders (.git, .gitignore, .user.ini, .env, ...) and PHP error logs are never public.
+# .well-known stays reachable: SSL certificate checks (AutoSSL / Let's Encrypt) use it.
+RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]
+RewriteRule (^|/)(error_log|php_errorlog|.*\.log)$ - [F,L,NC]
 
 # Serve existing files (assets, images, PDF, robots.txt) directly;
 # route every other request through the front controller.
@@ -35,6 +48,7 @@ RewriteRule ^ index.php [QSA,L]
     AddType image/webp .webp
     AddType image/avif .avif
     AddType image/svg+xml .svg
+    AddType font/woff2 .woff2
 </IfModule>
 
 <IfModule mod_expires.c>
@@ -53,10 +67,11 @@ RewriteRule ^ index.php [QSA,L]
     ExpiresByType image/jpeg "access plus 1 year"
     ExpiresByType image/x-icon "access plus 1 year"
     ExpiresByType image/vnd.microsoft.icon "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
 </IfModule>
 
 <IfModule mod_headers.c>
-    <FilesMatch "\.(css|js|svg|webp|avif|png|jpe?g|ico)$">
+    <FilesMatch "\.(css|js|svg|webp|avif|png|jpe?g|ico|woff2)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
     # Keep the downloadable book out of search results.
@@ -64,4 +79,10 @@ RewriteRule ^ index.php [QSA,L]
         Header set X-Robots-Tag "noindex, nofollow"
     </FilesMatch>
     Header always set X-Content-Type-Options "nosniff"
+    # Browsers remember to use HTTPS only (sent over HTTPS only, so local http:// dev is unaffected).
+    Header always set Strict-Transport-Security "max-age=31536000" "expr=%{HTTPS} == 'on' || %{HTTP:X-Forwarded-Proto} == 'https'"
+    # Any stray http:// image/script (e.g. pasted into a blog post) is fetched over HTTPS,
+    # so it can never break the padlock with a mixed-content warning. HTTPS only: Safari would
+    # otherwise upgrade every asset of a plain-http copy (local/staging) and break it.
+    Header always set Content-Security-Policy "upgrade-insecure-requests" "expr=%{HTTPS} == 'on' || %{HTTP:X-Forwarded-Proto} == 'https'"
 </IfModule>

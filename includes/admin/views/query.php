@@ -28,6 +28,17 @@
             <dt>Source</dt><dd><?= e(source_label($query['source'] ?? null)) ?></dd>
             <dt>Received</dt><dd><?= e(time_ago($query['created_at'] ?? '')) ?></dd>
         </dl>
+<?php $attribution = query_attribution($query); ?>
+        <div class="card-head attribution-head"><h3>Where they came from</h3></div>
+<?php if ($attribution): ?>
+        <dl class="details">
+<?php foreach ($attribution as $label => $value): ?>
+            <dt><?= e($label) ?></dt><dd class="break"><?= e($value) ?></dd>
+<?php endforeach; ?>
+        </dl>
+<?php else: ?>
+        <p class="muted attribution-none">Direct visit: no campaign tags or referring site were recorded.</p>
+<?php endif; ?>
         <form method="post" action="<?= url('/admin/queries/' . $query['id'] . '/status') ?>" class="status-form">
             <?= csrf_field() ?>
             <span class="muted">Status</span>

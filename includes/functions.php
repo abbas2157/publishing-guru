@@ -54,3 +54,20 @@ function icon(string $name): string
     $icons ??= require __DIR__ . '/icons.php';
     return $icons[$name];
 }
+
+/** "Copy" button that copies $text to the clipboard (behaviour in assets/js/app.js). */
+function copy_button(string $text, string $label): string
+{
+    return '<button type="button" class="copy-btn" data-copy="' . e($text) . '" aria-label="' . e($label) . '" title="' . e($label) . '">'
+        . '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>'
+        . '<span>Copy</span></button>';
+}
+
+/** Give a page's <main> the "Skip to main content" target, wrapping the page in one if it has none. */
+function main_landmark(string $html): string
+{
+    if (preg_match('/<main\b/i', $html)) {
+        return preg_replace('/<main\b/i', '<main id="main-content" tabindex="-1"', $html, 1);
+    }
+    return '<main id="main-content" tabindex="-1">' . $html . '</main>';
+}

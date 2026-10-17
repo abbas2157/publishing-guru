@@ -9,7 +9,19 @@
  * All values reach SQL through prepared statements. DATETIME columns hold server-local time.
  */
 
-const DB_SCHEMA_VERSION = 1;
+const DB_SCHEMA_VERSION = 2;
+
+/** Marketing attribution stored with each contact query (schema v2): column => definition. */
+const DB_QUERY_ATTRIBUTION_COLUMNS = [
+    'utm_source' => "VARCHAR(100) NOT NULL DEFAULT ''",
+    'utm_medium' => "VARCHAR(100) NOT NULL DEFAULT ''",
+    'utm_campaign' => "VARCHAR(150) NOT NULL DEFAULT ''",
+    'utm_term' => "VARCHAR(150) NOT NULL DEFAULT ''",
+    'utm_content' => "VARCHAR(150) NOT NULL DEFAULT ''",
+    'click_id' => "VARCHAR(20) NOT NULL DEFAULT ''",
+    'referrer' => "VARCHAR(255) NOT NULL DEFAULT ''",
+    'landing_page' => "VARCHAR(255) NOT NULL DEFAULT ''",
+];
 
 function db(): PDO
 {
@@ -142,6 +154,7 @@ function db_migrate(PDO $pdo, int $from): void
             status ENUM('new','read','replied') NOT NULL DEFAULT 'new',
             ip VARCHAR(45) NOT NULL DEFAULT '',
             user_agent VARCHAR(255) NOT NULL DEFAULT '',
+            " . implode(",\n            ", array_map(fn($col, $def) => "$col $def", array_keys(DB_QUERY_ATTRIBUTION_COLUMNS), DB_QUERY_ATTRIBUTION_COLUMNS)) . ",
             created_at DATETIME NOT NULL,
             KEY idx_created (created_at),
             KEY idx_status (status),
@@ -218,6 +231,14 @@ function db_migrate(PDO $pdo, int $from): void
     ];
     foreach ($statements as $sql) {
         $pdo->exec($sql);
+    }
+
+    // v2: attribution columns on a pg_queries table made by v1 (one by one: MySQL has no ADD COLUMN IF NOT EXISTS).
+    $existing = $pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pg_queries'")->fetchAll(PDO::FETCH_COLUMN);
+    foreach (DB_QUERY_ATTRIBUTION_COLUMNS as $col => $def) {
+        if (!in_array($col, $existing, true)) {
+            $pdo->exec("ALTER TABLE pg_queries ADD COLUMN $col $def AFTER user_agent");
+        }
     }
 
     if ($from === 0) {

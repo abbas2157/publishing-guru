@@ -538,6 +538,35 @@ function blog_store_upload(array $file, ?string &$error): ?string
     return $path;
 }
 
+/**
+ * 1200x630 JPEG copy of a post image for link previews (LinkedIn and some apps skip WebP,
+ * and other ratios get cropped). Made on first use next to the original; falls back to it.
+ */
+function blog_share_image(string $path): string
+{
+    $root = dirname(__DIR__);
+    $share = preg_replace('/\.\w+$/', '', $path) . '-share.jpg';
+    if (is_file("$root/$share")) {
+        return $share;
+    }
+    $data = @file_get_contents("$root/$path");
+    $src = $data !== false && function_exists('imagecreatefromstring') ? @imagecreatefromstring($data) : false;
+    if (!$src) {
+        return $path;
+    }
+    // Cover-crop to 1.91:1 around the centre.
+    [$w, $h] = [imagesx($src), imagesy($src)];
+    $cropW = min($w, (int) round($h * 1200 / 630));
+    $cropH = (int) round($cropW * 630 / 1200);
+    $dst = imagecreatetruecolor(1200, 630);
+    imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+    imagecopyresampled($dst, $src, 0, 0, (int) (($w - $cropW) / 2), (int) (($h - $cropH) / 2), 1200, 630, $cropW, $cropH);
+    $ok = imagejpeg($dst, "$root/$share", 85);
+    imagedestroy($src);
+    imagedestroy($dst);
+    return $ok ? $share : $path;
+}
+
 /** Make sure nothing in the uploads folder can run as a script. */
 function blog_protect_uploads(string $dir): void
 {
@@ -646,9 +675,11 @@ function blog_post_route(array $post): array
         'schema' => ['article-schema' => blog_post_schema($post)],
         'cms' => false,
         'post' => $post,
+        // Reading-progress bar across the top, tracking the article (layout.php / app.js).
+        'scroll_progress' => true,
     ];
     if (!empty($post['image'])) {
-        $route['og_image'] = $post['image'];
+        $route['og_image'] = blog_share_image($post['image']);
         $route['og_image_alt'] = ($post['image_alt'] ?? '') ?: $post['title'];
         $route['preload'] = $post['image'];
     }

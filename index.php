@@ -7,6 +7,7 @@ require __DIR__ . '/includes/functions.php';
 require __DIR__ . '/includes/db.php';
 require __DIR__ . '/includes/cms.php';
 require __DIR__ . '/includes/blog.php';
+require __DIR__ . '/includes/search.php';
 
 if (NOINDEX) {
     header('X-Robots-Tag: noindex, nofollow');
@@ -45,6 +46,9 @@ if ($path === '/sitemap.xml') {
     echo '<?xml version="1.0" encoding="UTF-8"?>', "\n";
     echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', "\n";
     foreach ($routes as $routePath => $route) {
+        if (($route['sitemap'] ?? true) === false) {
+            continue;
+        }
         $loc = SITE_URL . ($routePath === '/' ? '/' : $routePath);
         // Newer of the template and the last edit made in /admin/seo.
         $edited = strtotime(cms_data()['updated'][$routePath] ?? '') ?: 0;

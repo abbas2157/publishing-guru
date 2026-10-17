@@ -6,8 +6,8 @@
                         <path d="M19 12H5"></path>
                     </svg>Back to Home</a></div>
             <div class="max-w-4xl mx-auto text-center">
-                <div class="mb-8"><img src="<?= asset('assets/all-services-kdp-book-Bib-Gf8l.svg') ?>" width="78" height="78" alt="KDP Flipping Web" class="w-32 h-32 mx-auto mb-6"></div>
-                <h1 class="text-4xl lg:text-5xl font-bold mb-6">Sell Your Amazon KDP Business with Publishinguru</h1>
+                <div class="mb-8"><img src="<?= asset('assets/all-services-kdp-book-Bib-Gf8l.svg') ?>" width="78" height="78" alt="Sell your KDP business" class="w-32 h-32 mx-auto mb-6"></div>
+                <h1 class="text-4xl lg:text-5xl font-bold mb-6">Sell Your Amazon KDP Business with Publishing Guru</h1>
                 <p class="text-xl text-white/90 mb-8 max-w-3xl mx-auto">Turn Your Publishing Work Into a Profitable Exit</p><a href="<?= url('/contact?service=kdp-flipping-web') ?>"><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-md px-8 py-4 text-lg">Submit Your KDP Business</button></a>
             </div>
         </div>
@@ -16,7 +16,7 @@
         <div class="container mx-auto px-4 sm:px-6">
             <div class="max-w-4xl mx-auto">
                 <h2 class="text-3xl lg:text-4xl font-bold text-center mb-8">What We Offer</h2>
-                <p class="text-lg text-muted-foreground text-center mb-16 max-w-3xl mx-auto">Publishinguru helps you sell your Amazon KDP publishing business through a professional, managed process that increases your chances of finding the right buyer.</p>
+                <p class="text-lg text-muted-foreground text-center mb-16 max-w-3xl mx-auto">Publishing Guru helps you sell your Amazon KDP publishing business through a professional, managed process that increases your chances of finding the right buyer.</p>
                 <div class="mb-16">
                     <h3 class="text-2xl lg:text-3xl font-bold text-center mb-12">Included Services</h3>
                     <div class="grid md:grid-cols-2 gap-6">
@@ -122,14 +122,14 @@
                         </svg>
                         <div>
                             <h3 class="text-xl font-bold mb-4">Lock-In Period (90 Days)</h3>
-                            <p class="text-muted-foreground mb-4">Once your KDP asset is approved, you agree to exclusively list it with Publishinguru for 90 days. You may not list or sell it elsewhere during this period.</p>
+                            <p class="text-muted-foreground mb-4">Once your KDP asset is approved, you agree to exclusively list it with Publishing Guru for 90 days. You may not list or sell it elsewhere during this period.</p>
                         </div>
                     </div>
                 </div>
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg border border-yellow-200 dark:border-yellow-800">
                     <h4 class="font-bold text-lg mb-3">Important Disclaimers:</h4>
                     <ul class="space-y-2 text-muted-foreground">
-                        <li>• Publishinguru is a service provider, not a buyer.</li>
+                        <li>• Publishing Guru is a service provider, not a buyer.</li>
                         <li>• No guarantee of sale or valuation is made.</li>
                         <li>• We work to promote, list, and negotiate your asset's sale.</li>
                     </ul>

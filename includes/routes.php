@@ -27,6 +27,7 @@ $organizationSchema = [
     'contactPoint' => [
         '@type' => 'ContactPoint',
         'telephone' => '+1-720-803-4953',
+        'email' => CONTACT_EMAIL,
         'contactType' => 'customer support',
         'availableLanguage' => 'English',
         'url' => SITE_URL . '/contact',
@@ -73,7 +74,11 @@ $service = fn(string $path, string $name, string $title, string $description, st
 return [
     '/' => [
         'view' => 'home',
-        'preload' => 'hero-bg.webp',
+        // Phones get a 10 KB hero texture; the media queries match the .hero-bg rules in pages/home.php.
+        'preload' => [
+            ['href' => 'hero-bg-mobile.webp', 'media' => '(max-width: 767px)'],
+            ['href' => 'hero-bg.webp', 'media' => '(min-width: 768px)'],
+        ],
         'name' => 'Home',
         'title' => 'Amazon Book Publishing Services | KDP Book Publisher USA',
         'description' => 'Done-for-you Amazon book publishing services to help authors write, publish, optimize, and scale compliant KDP books. Book a free strategy call today.',
@@ -122,6 +127,17 @@ return [
             'inLanguage' => 'en-US',
         ]],
     ],
+    // Site search results: kept out of the sitemap and the index (Google's guidance for search pages).
+    '/search' => [
+        'view' => 'search',
+        'name' => 'Search',
+        'title' => 'Search | Publishing Guru',
+        'description' => 'Search Publishing Guru services, pages and blog articles.',
+        'robots' => 'noindex, follow',
+        'sitemap' => false,
+        'search' => false,
+        'cms' => false,
+    ],
     '/contact' => [
         'view' => 'contact',
         'name' => 'Contact',
@@ -144,13 +160,19 @@ return [
     ],
     '/amazon-kdp-course-book' => [
         'view' => 'amazon-kdp-course-book',
-        'preload' => 'assets/kdp-banner-DbGG8k1i.webp',
+        'preload' => [[
+            'href' => 'assets/kdp-banner-DbGG8k1i.webp',
+            'srcset' => asset('assets/kdp-banner-828.webp') . ' 828w, ' . asset('assets/kdp-banner-DbGG8k1i.webp') . ' 1920w',
+            'sizes' => '100vw',
+        ]],
         'name' => 'Amazon KDP Course Book',
         'title' => 'Amazon KDP Course Book – KDP Made Simple | Publishing Guru',
         'description' => 'KDP Made Simple: a 30-minute, step-by-step Amazon KDP course book that teaches the complete publishing system. $35 one-time payment.',
         'wrapper' => 'min-h-screen bg-background',
         'track' => ['content_name' => 'Amazon KDP Course Book', 'content_category' => 'Course', 'value' => 35, 'currency' => 'USD'],
-        'og_image' => 'assets/kdp-banner-DbGG8k1i.jpg',
+        // 1200x630 (the banner itself is too wide: share previews would crop its text).
+        'og_image' => 'assets/kdp-banner-og.jpg',
+        'og_image_alt' => 'KDP Made Simple – A 30-Minute Guide to Mastering the Science of Profitable Publishing',
         'schema' => ['product-schema' => [
             '@context' => 'https://schema.org',
             '@type' => 'Product',

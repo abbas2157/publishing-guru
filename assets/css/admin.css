@@ -477,3 +477,16 @@ body.is-dirty .post-side .save-state { color: hsl(25 80% 38%); font-weight: 700;
     .save-bar { bottom: 8px; }
     .save-state { display: none; }
 }
+
+/* Query attribution (views/query.php, views/_table.php) */
+.attribution-head{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid hsl(var(--border))}
+.attribution-none{font-size:.9rem}
+.details dd.break{overflow-wrap:anywhere}
+.via{display:block;margin-top:.3rem;font-size:.75rem;color:hsl(var(--muted-foreground))}
+
+/* Password show/hide toggle (views/login.php) */
+.pw-toggle { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; margin-right: -6px; border: 0; border-radius: 8px; background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer; transition: color .2s, background-color .2s; }
+.pw-toggle:hover { color: hsl(var(--foreground)); background: hsl(var(--accent) / .2); }
+.pw-toggle:focus-visible { outline: 2px solid hsl(var(--accent)); outline-offset: 1px; }
+.pw-toggle [hidden] { display: none; }
+.pw-toggle .icon { width: 18px; height: 18px; }

@@ -11,16 +11,27 @@
         <div class="container mx-auto px-4">
             <div class="w-full mx-auto">
                 <div class="calendly-inline-widget" data-url="https://calendly.com/publishinguru/free-consultancy-amazon-kdp" style="min-width: 320px; height: 700px;"></div>
+                <script>
+                // Pass this visit's campaign tags to Calendly so bookings show where they came from.
+                // Reads the URL (landed here directly) or what app.js saved when the visit started.
+                (function () {
+                    var el = document.currentScript.previousElementSibling, keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+                    var stored = {}; try { stored = JSON.parse(sessionStorage.getItem('pg-attribution')) || {}; } catch (e) {}
+                    var here = new URLSearchParams(location.search), url = new URL(el.getAttribute('data-url'));
+                    keys.forEach(function (k) { var v = here.get(k) || stored[k]; if (v) url.searchParams.set(k, v.slice(0, 150)); });
+                    el.setAttribute('data-url', url.toString());
+                })();
+                </script>
                 <div class="mt-12 text-center">
                     <h3 class="text-xl font-semibold text-foreground mb-4">Prefer to Contact Us Directly?</h3>
                     <div class="flex flex-col sm:flex-row gap-6 justify-center">
                         <div class="flex items-center justify-center space-x-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone h-5 w-5 text-primary">
                                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                            </svg><span class="text-foreground">+1 (555) 123-4567</span></div>
+                            </svg><a href="tel:+17208034953" class="text-foreground hover:underline">+1 (720) 803-4953</a><?= copy_button('+1 (720) 803-4953', 'Copy phone number') ?></div>
                         <div class="flex items-center justify-center space-x-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail h-5 w-5 text-primary">
                                 <rect width="20" height="16" x="2" y="4" rx="2"></rect>
                                 <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-                            </svg><span class="text-foreground">hello@publishingguru.com</span></div>
+                            </svg><a href="mailto:<?= CONTACT_EMAIL ?>" class="text-foreground hover:underline"><?= CONTACT_EMAIL ?></a><?= copy_button(CONTACT_EMAIL, 'Copy email address') ?></div>
                     </div>
                 </div>
             </div>

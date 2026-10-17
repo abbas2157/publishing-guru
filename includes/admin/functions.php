@@ -67,11 +67,11 @@ function csrf_field(): string
 
 /**
  * All stored queries, newest first. Each query:
- * id, created_at (ISO 8601), source (contact|home), service, name, email, phone, message, status (new|read|replied)
+ * id, created_at (ISO 8601), source (contact|home), service, name, email, phone, message, status (new|read|replied), plus the attribution columns (DB_QUERY_ATTRIBUTION_COLUMNS)
  */
 function admin_queries(): array
 {
-    $rows = db_all('SELECT id, created_at, source, service, name, email, phone, message, status FROM pg_queries ORDER BY created_at DESC, id DESC');
+    $rows = db_all('SELECT id, created_at, source, service, name, email, phone, message, status, ' . implode(', ', array_keys(DB_QUERY_ATTRIBUTION_COLUMNS)) . ' FROM pg_queries ORDER BY created_at DESC, id DESC');
     return array_map(function ($row) {
         $row['id'] = (string) $row['id'];
         $row['created_at'] = db_iso($row['created_at']);
@@ -170,9 +170,36 @@ function admin_icon(string $name, string $class = 'icon'): string
         'chevron-down' => '<path d="m6 9 6 6 6-6"/>',
         'pen' => '<path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.85.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.85z"/>',
         'eye' => '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',
+        'eye-off' => '<path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c4.67 0 8.6 3 9.94 7a10.76 10.76 0 0 1-1.44 2.49"/><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24"/><path d="M17.48 17.5A10.74 10.74 0 0 1 12 19c-4.67 0-8.6-3-9.94-7a10.76 10.76 0 0 1 4.46-5.51"/><path d="m2 2 20 20"/>',
         'upload' => '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
         'folder' => '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
         'user' => '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
     ];
     return '<svg xmlns="http://www.w3.org/2000/svg" class="' . e($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $paths[$name] . '</svg>';
+}
+
+/** Labelled, non-empty attribution fields of a query (UTM tags, ad click, referrer, landing page). */
+function query_attribution(array $q): array
+{
+    $clicks = ['gclid' => 'Google Ads click', 'fbclid' => 'Facebook / Instagram click', 'msclkid' => 'Microsoft Ads click', 'ttclid' => 'TikTok Ads click'];
+    $referrer = $q['referrer'] ?? '';
+    return array_filter([
+        'Source' => $q['utm_source'] ?? '',
+        'Medium' => $q['utm_medium'] ?? '',
+        'Campaign' => $q['utm_campaign'] ?? '',
+        'Term' => $q['utm_term'] ?? '',
+        'Content' => $q['utm_content'] ?? '',
+        'Ad click' => $clicks[$q['click_id'] ?? ''] ?? '',
+        'Referrer' => $referrer !== '' ? (parse_url($referrer, PHP_URL_HOST) ?: $referrer) : '',
+        'Landing page' => $q['landing_page'] ?? '',
+    ], fn($v) => $v !== '');
+}
+
+/** Short "where from" label for the queries table: UTM source, else referring site. */
+function query_source_short(array $q): string
+{
+    if (($q['utm_source'] ?? '') !== '') {
+        return $q['utm_source'] . (($q['utm_campaign'] ?? '') !== '' ? ' · ' . $q['utm_campaign'] : '');
+    }
+    return ($q['referrer'] ?? '') !== '' ? (string) parse_url($q['referrer'], PHP_URL_HOST) : '';
 }

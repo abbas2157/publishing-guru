@@ -6,7 +6,7 @@
                         <path d="M19 12H5"></path>
                     </svg>Back to Home</a></div>
             <div class="max-w-4xl mx-auto text-center">
-                <div class="mb-8"><img src="<?= asset('assets/packages-a-z-CNs_hVCd.svg') ?>" width="112" height="111" alt="Success Accelerator" class="w-32 h-32 mx-auto mb-6"></div>
+                <div class="mb-8"><img src="<?= asset('assets/packages-a-z-CNs_hVCd.svg') ?>" width="112" height="111" alt="A-to-Z Book Creation Services" class="w-32 h-32 mx-auto mb-6"></div>
                 <div class="bg-accent text-accent-foreground px-6 py-2 rounded-full inline-block mb-6"><span class="font-semibold">COMPLETE SOLUTION</span></div>
                 <h1 class="text-4xl lg:text-5xl font-bold mb-6">A-to-Z Book Creation Services</h1>
                 <p class="text-xl text-[#222]/90 mb-8 max-w-2xl mx-auto">Fast-track your publishing success with intensive support and everything you need to build a thriving book business.</p>
@@ -126,7 +126,7 @@
                     <p class="text-muted-foreground text-lg mb-4">We're so confident in the A-to-Z Book Creation Services program that we guarantee results within 90 days or your money back.</p>
                     <p class="text-sm text-muted-foreground">*Terms and conditions apply. Guarantee requires active participation in all program components.</p>
                 </div>
-                <div class="text-center"><button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-md px-8 py-4 text-lg" data-href="<?= url('/contact?service=success-accelerator') ?>">Start A-to-Z Book Creation Services</button>
+                <div class="text-center"><button class="inline-flex items-center justify-center gap-2 max-w-full font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-auto rounded-md px-8 py-4 text-lg" data-href="<?= url('/contact?service=success-accelerator') ?>">Start A-to-Z Book Creation Services</button>
                     <p class="text-sm text-muted-foreground mt-4">Immediate access</p>
                 </div>
             </div>

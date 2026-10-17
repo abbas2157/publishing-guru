@@ -7,7 +7,7 @@
         <div class="max-w-8xl mx-auto space-y-3 sm:space-y-4">
             <div class="w-full"><a class="rounded-2xl border p-4 sm:p-6 lg:p-8 bg-[#393836] text-white flex flex-col sm:flex-row items-center justify-center relative cursor-pointer hover:opacity-90 transition-opacity block" href="<?= url('/services/niche-keyword-research') ?>">
                     <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 justify-center text-center sm:text-left">
-                        <h3 class="text-lg sm:text-xl lg:text-2xl font-bold">Niche &amp; Keyword Research</h3><span class="text-xl sm:text-2xl font-bold text-white">$50</span><img src="<?= asset('assets/Arrow-white-C94ZFL5u.svg') ?>" width="36" height="10" loading="lazy" decoding="async" alt="Arrow" class="w-4 h-4 sm:w-auto sm:h-auto">
+                        <h3 class="text-lg sm:text-xl lg:text-2xl font-bold">Niche &amp; Keyword Research</h3><span class="text-xl sm:text-2xl font-bold text-white">$50</span><img src="<?= asset('assets/Arrow-white-C94ZFL5u.svg') ?>" width="36" height="10" loading="lazy" decoding="async" alt="" class="w-4 h-4 sm:w-auto sm:h-auto">
                         <p class="text-white/80 text-sm sm:text-base">Find profitable low-competition keywords tailored to your niche.</p>
                     </div>
                 </a></div>
@@ -18,7 +18,7 @@
                             <h3 class="text-lg sm:text-xl lg:text-2xl font-bold mb-2">Book Formatting</h3>
                             <p class="text-2xl font-bold text-white mb-2">$100</p>
                             <p class="text-white/80 mt-2 text-center text-sm sm:text-base">Professional formatting for Kindle &amp; Paperback. Includes:</p>
-                            <div class="flex justify-center mt-4"><img src="<?= asset('assets/Arrow-white-down-tOeF9v4v.svg') ?>" width="10" height="37" loading="lazy" decoding="async" alt="Arrow"></div>
+                            <div class="flex justify-center mt-4"><img src="<?= asset('assets/Arrow-white-down-tOeF9v4v.svg') ?>" width="10" height="37" loading="lazy" decoding="async" alt=""></div>
                         </div>
                         <ul class="space-y-1 mb-8 text-center ">
                             <li class="flex items-center justify-center"><span class="text-white">Clean chapter structuring</span></li>
@@ -33,7 +33,7 @@
                             <h3 class="text-lg sm:text-xl lg:text-2xl font-bold mb-2">Amazon Ads Management</h3>
                             <p class="text-2xl font-bold text-[#222] mb-2">$85/month/book</p>
                             <p class="text-[#222]/80 mt-2 text-center text-sm sm:text-base">Complete PPC strategy &amp; management:</p>
-                            <div class="flex justify-center mt-4"><img src="<?= asset('assets/Arrow-black-down-nsTX3KkT.svg') ?>" width="10" height="37" loading="lazy" decoding="async" alt="Arrow"></div>
+                            <div class="flex justify-center mt-4"><img src="<?= asset('assets/Arrow-black-down-nsTX3KkT.svg') ?>" width="10" height="37" loading="lazy" decoding="async" alt=""></div>
                         </div>
                         <ul class="space-y-1 mb-8 text-center ">
                             <li class="flex items-center justify-center"><span class="text-[#222]"> Weekly ad performance optimization</span></li>
@@ -47,7 +47,7 @@
                             <h3 class="text-lg sm:text-xl lg:text-2xl font-bold mb-2">Professional TOC Creation</h3>
                             <p class="text-2xl font-bold text-[#222] mb-2">$45</p>
                             <p class="text-[#222]/80 mt-2 text-center text-sm sm:text-base">Get your Table of Contents designed</p>
-                            <div class="flex justify-center mt-4"><img src="<?= asset('assets/Arrow-black-down-nsTX3KkT.svg') ?>" width="10" height="37" loading="lazy" decoding="async" alt="Arrow"></div>
+                            <div class="flex justify-center mt-4"><img src="<?= asset('assets/Arrow-black-down-nsTX3KkT.svg') ?>" width="10" height="37" loading="lazy" decoding="async" alt=""></div>
                         </div>
                         <ul class="space-y-1 mb-8 text-center ">
                             <li class="flex items-center justify-center"><span class="text-[#222]">Clickable TOC for Kindle and </span></li>
@@ -82,7 +82,7 @@
                             <div class="flex items-center justify-center mx-auto mb-3 sm:mb-4"><img src="<?= asset('assets/packages-a-z-CNs_hVCd.svg') ?>" width="112" height="111" loading="lazy" decoding="async" alt="A-to-Z Book Creation Services icon" class="w-12 sm:w-16 lg:w-18 xl:w-22 h-auto"></div>
                             <h3 class="text-lg sm:text-xl lg:text-2xl font-bold mb-2">A-to-Z Book Creation Services</h3>
                             <p class="text-[#222]/80 mt-2 text-center text-sm sm:text-base">Fast-track your publishing success with intensive support</p>
-                            <div class="flex justify-center mt-4"><img src="<?= asset('assets/Arrow-black-down-nsTX3KkT.svg') ?>" width="10" height="37" loading="lazy" decoding="async" alt="Arrow"></div>
+                            <div class="flex justify-center mt-4"><img src="<?= asset('assets/Arrow-black-down-nsTX3KkT.svg') ?>" width="10" height="37" loading="lazy" decoding="async" alt=""></div>
                         </div>
                         <ul class="space-y-1 mb-8 text-center flex-grow">
                             <li class="flex items-center justify-center"><span class="text-[#222]">Everything in Elite package</span></li>

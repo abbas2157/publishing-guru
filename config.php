@@ -40,6 +40,10 @@ defined('DB_NAME') || define('DB_NAME', 'publishing_guru');
 defined('DB_USER') || define('DB_USER', 'root');
 defined('DB_PASS') || define('DB_PASS', '');
 
+// Google Search Console "HTML tag" verification: paste only the content="..." value.
+// (Not needed if the domain is verified with a DNS TXT record instead.)
+defined('GOOGLE_SITE_VERIFICATION') || define('GOOGLE_SITE_VERIFICATION', '');
+
 // Keep development/staging copies out of search engines: every page gets a noindex
 // meta tag and X-Robots-Tag header unless it is served from the production host.
 // Force it either way with define('NOINDEX', true|false) in config.local.php.
@@ -65,10 +69,11 @@ const INQUIRY_SERVICES = [
     'toc-creation' => 'Professional TOC Creation',
     'book-cover' => 'Book Cover Design',
     'a-content' => 'A+ Content Design',
-    'success-accelerator' => 'Success Accelerator',
-    'kdp-flipping-web' => 'KDP Flipping Web',
+    'success-accelerator' => 'A-to-Z Book Creation Services',
+    'kdp-flipping-web' => 'Sell Your KDP Business (KDP Flipping)',
     'general' => 'General Inquiry',
 ];
 
 define('CALENDLY_URL', 'https://calendly.com/publishinguru/free-consultancy-amazon-kdp');
 define('WHATSAPP_NUMBER', '17208034953');
+define('CONTACT_EMAIL', 'publishingurullc@gmail.com');

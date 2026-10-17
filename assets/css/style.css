@@ -183,3 +183,122 @@
 @media (min-width:1024px){.blog-related{padding:5rem 0 6rem}}
 .blog-related-title{margin-bottom:2rem;font-size:1.75rem;font-weight:700;text-align:center}
 @media (min-width:1024px){.blog-related-title{font-size:2.25rem}}
+
+/* Cookie banner (includes/layout.php, assets/js/app.js) */
+.cookie-banner{position:fixed;z-index:60;left:16px;right:16px;bottom:16px;max-width:420px;padding:16px 18px;border-radius:var(--radius);background:hsl(var(--primary));color:hsl(var(--primary-foreground));box-shadow:0 10px 30px rgb(0 0 0 / .25);font-size:.875rem;line-height:1.5}
+.cookie-banner[hidden]{display:none}
+.cookie-banner p{margin:0 0 12px}
+.cookie-banner-actions{display:flex;gap:8px;justify-content:flex-end}
+.cookie-btn{min-height:40px;padding:8px 18px;border-radius:calc(var(--radius) - 2px);font-weight:600;font-size:.875rem;cursor:pointer;transition:background-color .2s,color .2s}
+.cookie-btn-primary{background:hsl(var(--accent));color:hsl(var(--accent-foreground))}
+.cookie-btn-primary:hover{background:hsl(var(--accent) / .85)}
+.cookie-btn-secondary{background:transparent;color:hsl(var(--primary-foreground));border:1px solid hsl(var(--primary-foreground) / .35)}
+.cookie-btn-secondary:hover{background:hsl(var(--primary-foreground) / .1)}
+.cookie-btn:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}
+@media (min-width:640px){.cookie-banner{right:auto;left:24px;bottom:24px}}
+
+/* Floating actions: back-to-top above the WhatsApp button (includes/toasters.php) */
+.floating-actions{position:fixed;right:24px;bottom:24px;z-index:50;display:flex;flex-direction:column;align-items:center;gap:12px}
+.back-to-top{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:999px;background:hsl(var(--primary));color:hsl(var(--primary-foreground));box-shadow:0 8px 20px -6px rgb(0 0 0/.35);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .2s,transform .2s,visibility .2s,background-color .2s}
+.back-to-top.is-visible{opacity:1;visibility:visible;transform:none}
+.back-to-top:hover{background:hsl(var(--primary)/.85)}
+.back-to-top:focus-visible,.header-search:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}
+
+/* Header search icon + mobile menu search */
+.header-search{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;color:hsl(var(--foreground));transition:background-color .2s}
+.header-search:hover{background:hsl(var(--accent)/.35)}
+.blog-search.menu-search{max-width:none;margin:0}
+.menu-search button{height:2.25rem;padding:0 1rem}
+.story-link[aria-current=page]:after{transform:scaleX(1)}
+
+/* Search results (pages/search.php) */
+.search-results{max-width:48rem}
+.search-list{display:flex;flex-direction:column;gap:1rem;margin:0;padding:0;list-style:none}
+.search-item{position:relative;padding:1.25rem 1.5rem;border:1px solid hsl(var(--border));border-radius:calc(var(--radius) * 1.5);background:hsl(var(--card));transition:border-color .2s,box-shadow .2s}
+.search-item:hover,.search-item:focus-within{border-color:hsl(var(--accent));box-shadow:0 10px 28px -18px rgb(0 0 0/.35)}
+.search-item h2{margin:.3rem 0 .4rem;font-size:1.25rem;font-weight:700;line-height:1.3}
+.search-item h2 a:after{content:"";position:absolute;inset:0}
+.search-item h2 a:focus-visible{outline:none}
+.search-item p{font-size:.95rem;color:hsl(var(--foreground)/.8)}
+.search-type{font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:hsl(var(--muted-foreground))}
+.search-results mark{padding:0 .1em;border-radius:2px;background:hsl(var(--accent)/.5);color:inherit}
+.search-suggest{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem;margin-top:.5rem}
+.blog-empty .search-suggest a{padding:.3rem .8rem;border:1px solid hsl(var(--border));border-radius:999px;background:hsl(var(--card));font-size:.875rem;text-decoration:none}
+.blog-empty .search-suggest a:hover{border-color:hsl(var(--accent))}
+
+/* Page-load progress bar: shown only when a navigation takes a moment (assets/js/app.js) */
+.page-progress{position:fixed;top:0;left:0;z-index:100;width:100%;height:3px;background:hsl(var(--accent));box-shadow:0 0 8px hsl(var(--accent)/.7);transform:scaleX(0);transform-origin:left;opacity:0;pointer-events:none}
+.page-progress.is-loading{opacity:1;animation:page-progress 10s cubic-bezier(.08,.75,.25,1) forwards}
+@keyframes page-progress{0%{transform:scaleX(0)}8%{transform:scaleX(.4)}100%{transform:scaleX(.92)}}
+@media (prefers-reduced-motion:reduce){.page-progress.is-loading{animation:none;transform:scaleX(.6)}.back-to-top{transition:none}}
+
+/* Hover / focus polish: elements that had no hover feedback (mouse devices only, so touch never sticks) */
+@media (hover:hover){
+.header-logo{transition:opacity .2s}
+.header-logo:hover{opacity:.75}
+[role=combobox]:not(:disabled):hover{border-color:hsl(var(--foreground)/.45)}
+a[class*="hover:text-[#222]"]:hover{text-decoration:underline;text-decoration-color:hsl(var(--accent));text-decoration-thickness:2px;text-underline-offset:4px}
+.search-item:hover h2 a{text-decoration:underline;text-decoration-color:hsl(var(--accent));text-decoration-thickness:2px;text-underline-offset:4px}
+}
+.header-logo:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:4px;border-radius:4px}
+.search-item:has(h2 a:focus-visible){outline:2px solid hsl(var(--ring));outline-offset:2px}
+
+/* Skip link: hidden until focused with the keyboard (includes/layout.php) */
+.skip-link{position:fixed;top:12px;left:12px;z-index:200;padding:.7rem 1.1rem;border-radius:var(--radius);background:hsl(var(--primary));color:hsl(var(--primary-foreground));font-weight:600;box-shadow:0 8px 24px rgb(0 0 0/.25);transform:translateY(-200%);transition:transform .15s}
+.skip-link:focus{transform:none;outline:2px solid hsl(var(--ring));outline-offset:2px}
+#main-content:focus{outline:none}
+
+/* Scroll / reading progress bar (enabled per page with 'scroll_progress') */
+.scroll-progress{position:fixed;top:0;left:0;right:0;z-index:70;height:3px;pointer-events:none}
+.scroll-progress span{display:block;height:100%;background:hsl(var(--accent));transform:scaleX(0);transform-origin:left;will-change:transform}
+
+/* Copy buttons (copy_button() in includes/functions.php) */
+.copy-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .7rem;border:1px solid hsl(var(--border));border-radius:999px;background:hsl(var(--card));color:hsl(var(--foreground));font-size:.8rem;font-weight:600;line-height:1;cursor:pointer;transition:border-color .2s,background-color .2s}
+.copy-btn:hover{border-color:hsl(var(--accent));background:hsl(var(--accent)/.2)}
+.copy-btn:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}
+.copy-btn.is-copied{border-color:hsl(142 60% 40%);color:hsl(142 60% 28%);background:hsl(142 60% 40%/.1)}
+.contact-phone{display:flex;align-items:stretch;gap:.5rem}
+.contact-phone>a{flex:1;min-width:0}
+.contact-phone>.copy-btn{border-radius:calc(var(--radius) + 2px);padding:0 1rem}
+.blog-content pre{position:relative}
+.blog-content pre .copy-btn{position:absolute;top:.5rem;right:.5rem;margin-left:0}
+
+/* The fixed header is transparent on md+: let clicks in its empty padding reach the page underneath
+   (e.g. the "Back to Home" links just below it); its own links and buttons stay clickable. */
+@media (min-width:768px){
+header.md\:fixed{pointer-events:none}
+header.md\:fixed :is(a,button,input,select,[role=button],[role=combobox]){pointer-events:auto}
+}
+
+/* Yellow highlighter behind dark text: keeps the brand yellow readable on light backgrounds */
+.text-highlight{background-image:linear-gradient(hsl(var(--accent)),hsl(var(--accent)));background-size:100% 35%;background-position:0 88%;background-repeat:no-repeat}
+
+/* Contact form states (assets/js/app.js initContactForms) */
+:root{--form-error:0 70% 40%;--form-success:142 55% 32%}
+form[data-contact-form] [aria-invalid=true]{border-color:hsl(var(--form-error));box-shadow:0 0 0 1px hsl(var(--form-error))}
+form[data-contact-form] [aria-invalid=true]:focus{box-shadow:0 0 0 3px hsl(var(--form-error)/.25)}
+.field-error{display:flex;align-items:flex-start;gap:.4rem;margin-top:.4rem;font-size:.85rem;line-height:1.35;font-weight:500;color:hsl(var(--form-error));animation:form-state-in .2s ease-out}
+.field-error svg{flex-shrink:0;margin-top:.1rem}
+.form-alert{display:flex;gap:.6rem;margin-bottom:1rem;padding:.85rem 1rem;border:1px solid hsl(var(--form-error)/.35);border-radius:var(--radius);background:hsl(var(--form-error)/.07);color:hsl(var(--form-error));font-size:.9rem;line-height:1.45;text-align:left;animation:form-state-in .2s ease-out}
+.form-alert svg{flex-shrink:0;margin-top:.15rem}
+.form-alert p+p{margin-top:.25rem;color:hsl(var(--foreground)/.8)}
+.form-alert a{font-weight:600;text-decoration:underline;text-underline-offset:2px;color:hsl(var(--foreground))}
+.form-success{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2.5rem 1.5rem;border:1px solid hsl(var(--form-success)/.3);border-radius:calc(var(--radius) * 2);background:hsl(var(--form-success)/.06);text-align:center;animation:form-state-in .3s ease-out}
+.form-success:focus{outline:none}
+.form-success-icon{display:flex;align-items:center;justify-content:center;width:3.5rem;height:3.5rem;border-radius:999px;background:hsl(var(--form-success));color:#fff}
+.form-success h3{font-size:1.5rem;font-weight:700;color:hsl(var(--foreground))}
+.form-success p{max-width:28rem;color:hsl(var(--foreground)/.85)}
+.form-success strong{overflow-wrap:anywhere}
+.form-success-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;margin-top:.5rem}
+.form-success-primary,.form-success-secondary{display:inline-flex;align-items:center;min-height:2.75rem;padding:0 1.25rem;border-radius:var(--radius);font-weight:600;font-size:.95rem;transition:background-color .2s,border-color .2s}
+.form-success-primary{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.form-success-primary:hover{background:hsl(var(--primary)/.85)}
+.form-success-secondary{border:1px solid hsl(var(--border));background:hsl(var(--card));color:hsl(var(--foreground));cursor:pointer}
+.form-success-secondary:hover{border-color:hsl(var(--accent))}
+.form-success-primary:focus-visible,.form-success-secondary:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}
+@keyframes form-state-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.field-error,.form-alert,.form-success{animation:none}}
+
+/* The header is fixed from md up: keep anything scrolled or focused into view (form success panel,
+   invalid fields, skip-link target, #anchors) clear of it. */
+@media (min-width:768px){html{scroll-padding-top:8rem}}
