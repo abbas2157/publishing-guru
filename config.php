@@ -4,12 +4,12 @@
  */
 
 // Base path the site is served from. Detected automatically so the same code
-// works at a domain root (https://www.publishinguru.com/) and in a sub-folder
+// works at a domain root (https://publishinguru.com/) and in a sub-folder
 // (http://localhost/publishing-guru/). Override here if detection is wrong.
 define('BASE_PATH', rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/'));
 
 // Canonical production origin (used for canonical links and structured data).
-define('SITE_URL', 'https://www.publishinguru.com');
+define('SITE_URL', 'https://publishinguru.com');
 
 define('SITE_NAME', 'Publishing Guru');
 

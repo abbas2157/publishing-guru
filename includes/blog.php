@@ -320,7 +320,8 @@ function blog_clean_html(string $html): string
         return '';
     }
 
-    $siteHost = (string) parse_url(SITE_URL, PHP_URL_HOST);
+    // Links to the site itself, with or without www, stay in the same tab.
+    $siteHost = preg_replace('/^www\./i', '', (string) parse_url(SITE_URL, PHP_URL_HOST));
     $ids = [];
     $clean = function (DOMNode $node) use (&$clean, $doc, $allowed, $rename, $drop, $alignClasses, $siteHost, &$ids) {
         foreach (iterator_to_array($node->childNodes) as $child) {
@@ -372,7 +373,7 @@ function blog_clean_html(string $html): string
                 $href = trim($child->getAttribute('href'));
                 if ($href === '' || !preg_match('~^(https?://|mailto:|tel:|/|#)~i', $href)) {
                     $child->removeAttribute('href');
-                } elseif (preg_match('~^https?://~i', $href) && strcasecmp((string) parse_url($href, PHP_URL_HOST), $siteHost) !== 0) {
+                } elseif (preg_match('~^https?://~i', $href) && strcasecmp(preg_replace('/^www\./i', '', (string) parse_url($href, PHP_URL_HOST)), $siteHost) !== 0) {
                     $child->setAttribute('target', '_blank');
                     $child->setAttribute('rel', 'noopener noreferrer');
                 }

@@ -3,6 +3,10 @@ Options -MultiViews -Indexes
 
 RewriteEngine On
 
+# One canonical host: send www.publishinguru.com to publishinguru.com
+RewriteCond %{HTTP_HOST} ^www\.publishinguru\.com$ [NC]
+RewriteRule ^ https://publishinguru.com%{REQUEST_URI} [R=301,L]
+
 # Block direct access to templates and config
 RewriteRule ^(includes|pages|storage)(/|$) - [F,L]
 RewriteRule ^config(\.local|\.local\.example)?\.php$ - [F,L]
