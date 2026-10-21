@@ -133,6 +133,26 @@ foreach (is_string($preloads) ? [['href' => $preloads]] : $preloads as $preload)
     </script>
     <!-- End Facebook Pixel Code -->
 
+    <!-- Google Analytics 4 + Microsoft Clarity. gtag()/clarity() calls are queued; their scripts (and cookies)
+         only load once the visitor accepts the cookie banner, the same way as the Pixel above. -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '<?= GA_MEASUREMENT_ID ?>');
+      (function(c,l,a,r,i,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        var loaded=false;
+        c.loadAnalytics=function(){if(loaded)return;loaded=true;
+          y=l.getElementsByTagName(r)[0];
+          ["https://www.googletagmanager.com/gtag/js?id=<?= GA_MEASUREMENT_ID ?>","https://www.clarity.ms/tag/"+i].forEach(function(src){
+            var t=l.createElement(r);t.async=1;t.src=src;y.parentNode.insertBefore(t,y);
+          });
+        };
+        try{if(localStorage.getItem('pg-cookie-consent')==='granted')c.addEventListener('load',c.loadAnalytics)}catch(x){}
+      })(window, document, "clarity", "script", "<?= CLARITY_PROJECT_ID ?>");
+    </script>
+
     <link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>">
     <link rel="stylesheet" href="<?= asset('assets/css/sonner.css') ?>">
 <?php if (in_array($page['view'], ['blog', 'blog-post'], true)): ?>

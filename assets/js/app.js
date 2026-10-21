@@ -814,8 +814,8 @@
     }
 
     /* ------------------------------------------------------------------
-     * Cookie banner: the Facebook Pixel only loads after "Accept"
-     * (see the Pixel snippet in includes/layout.php)
+     * Cookie banner: the Facebook Pixel, Google Analytics and Clarity only
+     * load after "Accept" (see the snippets in includes/layout.php)
      * ---------------------------------------------------------------- */
     function initCookieBanner() {
         var banner = document.querySelector('[data-cookie-banner]');
@@ -835,7 +835,10 @@
             btn.addEventListener('click', function () {
                 var value = btn.getAttribute('data-cookie-choice');
                 try { localStorage.setItem(KEY, value); } catch (e) {}
-                if (value === 'granted' && window.loadPixel) window.loadPixel();
+                if (value === 'granted') {
+                    if (window.loadPixel) window.loadPixel();
+                    if (window.loadAnalytics) window.loadAnalytics();
+                }
                 banner.hidden = true;
                 window.removeEventListener('resize', lift);
                 if (floating) floating.style.bottom = '';

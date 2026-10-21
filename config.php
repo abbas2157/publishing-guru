@@ -22,6 +22,10 @@ define('DEFAULT_OG_IMAGE', 'assets/og-image.jpg');
 // Facebook Pixel.
 define('FB_PIXEL_ID', '1365172541683278');
 
+// Google Analytics 4 and Microsoft Clarity (both load only after cookie consent, like the Pixel).
+define('GA_MEASUREMENT_ID', 'G-21QZP3CCHC');
+define('CLARITY_PROJECT_ID', 'z15aqxrqir');
+
 // Admin dashboard login (/admin). Store only a password_hash() — never the plain password.
 // Generate a new hash with: php -r "echo password_hash('new-password', PASSWORD_DEFAULT);"
 define('ADMIN_USERNAME', 'admin');
@@ -42,7 +46,7 @@ defined('DB_PASS') || define('DB_PASS', '');
 
 // Google Search Console "HTML tag" verification: paste only the content="..." value.
 // (Not needed if the domain is verified with a DNS TXT record instead.)
-defined('GOOGLE_SITE_VERIFICATION') || define('GOOGLE_SITE_VERIFICATION', '');
+defined('GOOGLE_SITE_VERIFICATION') || define('GOOGLE_SITE_VERIFICATION', 'kcIWJ-3vgNVpJjABtSiiPCOEEnC1fb9AI2KGSMe3LaQ');
 
 // Keep development/staging copies out of search engines: every page gets a noindex
 // meta tag and X-Robots-Tag header unless it is served from the production host.
